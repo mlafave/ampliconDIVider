@@ -200,13 +200,23 @@ test_file ${BASE}.bcL
 
 # Remove reads for which the barcodes do not agree
 
-../perl/compare_barcodes.pl test_file ${BASE}.bcL test_file ${BASE}.bcR \
-	| sort > ${BASE}.bc.agree
+echo "Identifying reads for which the barcodes do not agree, to be removed later..."
 
+../perl/compare_barcodes.pl ${BASE}.bcL ${BASE}.bcR \
+	| sort | gzip -c > ${BASE}.bc.agree.gz
+
+test_file ${BASE}.bc.agree.gz
+
+# (Better zip up the original bcR and bcL files if you want to keep them -
+# otherwise, delete them)
 
 # Remove reads for which the barcode is not on the list of accepted barcodes
 
+echo "Identifying fragments with incorrect barcodes, to be removed later..."
 
+../sh/barcode_whitelist_compare.sh ${BARCODE_REF} ${BASE}.bc.agree.gz ${BASE}.bc.listpass.gz
+
+test_file ${BASE}.bc.listpass.gz
 
 # Remove the reads that don't have a paired read
 
