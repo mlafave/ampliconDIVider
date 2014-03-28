@@ -214,11 +214,42 @@ test_file ${BASE}.bc.agree.gz
 
 echo "Identifying fragments with incorrect barcodes, to be removed later..."
 
-../sh/barcode_whitelist_compare.sh ${BARCODE_REF} ${BASE}.bc.agree.gz ${BASE}.bc.listpass.gz
+../sh/barcode_whitelist_compare.sh ${BARCODE_REF} ${BASE}.bc.agree.gz \
+	${BASE}.bc.listpass.gz
 
 test_file ${BASE}.bc.listpass.gz
 
+
+
 # Remove the reads that don't have a paired read
+
+echo "Extracting basenames of paired reads from trimmed FASTQ..."
+../sh/fastq_paired_basenames.sh ${BASE}.rmdup.fulltrim.fastq.gz \
+	${BASE}.rmdup.fulltrim.pairednames
+
+test_file ${BASE}.rmdup.fulltrim.pairednames
+
+
+echo "Identifying correct & non-inconsistent barcodes that belong to paired reads..."
+../sh/barcode_paired.sh ${BASE}.bc.listpass.gz \
+	${BASE}.rmdup.fulltrim.pairednames ${BASE}.bc.listpass.paired
+
+test_file ${BASE}.bc.listpass.paired
+
+rm ${BASE}.rmdup.fulltrim.pairednames
+
+
+echo "Removing FASTQ reads that don't have a pair, or which don't have acceptable, consistent barcodes..."
+../sh/fastq_paired_passbc.sh ${BASE}.rmdup.fulltrim.fastq.gz \
+	${BASE}.bc.listpass.paired ${BASE}.rmdup.fulltrim.passbc.fastq.gz
+
+test_file ${BASE}.rmdup.fulltrim.passbc.fastq.gz
+
+
+echo "Compressing the paired barcode file..."
+gzip ${BASE}.bc.listpass.paired
+
+test_file ${BASE}.bc.listpass.paired.gz
 
 
 
