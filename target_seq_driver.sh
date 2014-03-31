@@ -42,6 +42,7 @@ source ~/.bashrc
 hash samtools 2>/dev/null || throw_error "samtools not found"
 hash bamtools 2>/dev/null || throw_error "bamtools not found"
 hash cutadapt 2>/dev/null || throw_error "cutadapt not found"
+hash novoalign 2>/dev/null || throw_error "novoalign not found"
 
 # Get files via CLI
 print_usage()
@@ -253,14 +254,73 @@ test_file ${BASE}.bc.listpass.paired.gz
 
 
 
+# Split the FASTQ into two files (if using Novoalign with paired reads)
+
+echo "Splitting the FASTQ file..."
+../sh/fastq_split.sh ${BASE}.rmdup.fulltrim.passbc.fastq.gz \
+	${BASE}.rmdup.fulltrim.passbc
+
+test_file ${BASE}.rmdup.fulltrim.passbc.1
+test_file ${BASE}.rmdup.fulltrim.passbc.2
+
+echo "Compressing the split FASTQ files..."
+gzip -c ${BASE}.rmdup.fulltrim.passbc.1 > ${BASE}.rmdup.fulltrim.passbc.1.fastq.gz
+gzip -c ${BASE}.rmdup.fulltrim.passbc.2 > ${BASE}.rmdup.fulltrim.passbc.2.fastq.gz
+
+test_file ${BASE}.rmdup.fulltrim.passbc.1.fastq.gz
+test_file ${BASE}.rmdup.fulltrim.passbc.2.fastq.gz
+
+rm ${BASE}.rmdup.fulltrim.passbc.1
+rm ${BASE}.rmdup.fulltrim.passbc.2
+
+
+
 # Align the trimmed sequences
 # Need to use a gap-aware aligner.  Try Novoalign the first time out, but BWA
 # or Bowtie2 are also options.
+
+####### IMPORTANT - the mean fragment size and SD need to fit the BAM being
+####### used. Might be something that needs to be submitted on the command
+####### line, maybe with defaults.
+
+echo "Aligning reads..."
+../sh/novoalign.sh \
+	${BASE}.rmdup.fulltrim.passbc.1.fastq.gz \
+	${BASE}.rmdup.fulltrim.passbc.2.fastq.gz \
+	${INDEX} \
+	57 \
+	1 \
+	${BASE}.aligned.bam
+
+test_file ${BASE}.aligned.bam
+
+
+
+# Store the header of the BAM as a separate SAM file
+
+echo "Extracting BAM header..."
+samtools view -H ${BASE}.aligned.bam > ${BASE}.aligned.header.sam
+
+test_file ${BASE}.aligned.header.sam
+
+
+
+# Put in the barcode information
+
+echo "Adding barcode information..."
+../sh/bam_barcode_add.sh ${BASE}.bc.listpass.paired ${BASE}.aligned.bam ${BASE}.aligned.header.sam ${BASE}.aligned.bc.bam
+
+test_file ${BASE}.aligned.bc.bam
 
 
 
 # Throw out any alignments in which the sequence hit doesn't agree with what
 # the barcode predicted should have been hit
+
+
+
+# MAYBE attempt to remove PCR duplicates again? Might want to think about it if
+# nothing is reduced the first time around.
 
 
 
