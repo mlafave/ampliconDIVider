@@ -305,17 +305,40 @@ test_file ${BASE}.aligned.header.sam
 
 
 
+# Extract only paired reads (discarding unalinged reads in the process)
+
+echo "Extracting proper pairs..."
+../sh/samtools_proper_pairs.sh \
+	${BASE}.aligned.bam \
+	${BASE}.aligned.pp.bam
+
+test_file ${BASE}.aligned.pp.bam
+
+
+
 # Put in the barcode information
 
 echo "Adding barcode information..."
-../sh/bam_barcode_add.sh ${BASE}.bc.listpass.paired ${BASE}.aligned.bam ${BASE}.aligned.header.sam ${BASE}.aligned.bc.bam
+../sh/bam_barcode_add.sh ${BASE}.bc.listpass.paired \
+	${BASE}.aligned.pp.bam \
+	${BASE}.aligned.header.sam \
+	${BASE}.aligned.pp.bc.bam
 
-test_file ${BASE}.aligned.bc.bam
+test_file ${BASE}.aligned.pp.bc.bam
 
 
 
 # Throw out any alignments in which the sequence hit doesn't agree with what
 # the barcode predicted should have been hit
+
+echo "Removing reads for which the barcode is not consistent with the aligned target..."
+../sh/barcode_target_agreement.sh \
+	${BARCODE_REF} \
+	${BASE}.aligned.pp.bc.bam \
+	${BASE}.aligned.header.sam \
+	${BASE}.aligned.pp.bc.target.bam
+
+test_file ${BASE}.aligned.pp.bc.target.bam
 
 
 
@@ -325,7 +348,8 @@ test_file ${BASE}.aligned.bc.bam
 
 
 # Split the SAM output into as many SAM files as there are fish (that is, split
-# by barcode)
+# by barcode & position, since some barcodes are used for multiple fish. Or
+# maybe add in plate/well info, and split with that and barcode?)
 
 
 
