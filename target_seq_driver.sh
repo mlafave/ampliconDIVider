@@ -148,13 +148,6 @@ test_file $BARCODE_REF
 
 # Prior to any of this, make an index of the amplified regions.
 
-# Remove PCR duplicates from input BAM file
-
-echo "Removing PCR duplicates..."
-../sh/samtools_rmdup.sh $BAMPATH ${BASE}.rmdup.bam
-
-test_file ${BASE}.rmdup.bam
-
 
 
 # Convert input BAM to FASTQ or FASTA
@@ -163,19 +156,19 @@ test_file ${BASE}.rmdup.bam
 
 echo "Converting to FASTQ..."
 
-../sh/bamtools_bamtofastq.sh ${BASE}.rmdup.bam ${BASE}.rmdup.fastq.gz
+../sh/bamtools_bamtofastq.sh $BAMPATH ${BASE}.fastq.gz
 
-test_file ${BASE}.rmdup.fastq.gz
+test_file ${BASE}.fastq.gz
 
 
 
 # Trim off & discard pigtail sequences
 
 echo "Trimming pigtail..."
-../sh/cutadapt_pigtailtrim.sh ${BASE}.rmdup.fastq.gz \
-	${BASE}.rmdup.pigtailtrim.fastq.gz
+../sh/cutadapt_pigtailtrim.sh ${BASE}.fastq.gz \
+	${BASE}.pigtailtrim.fastq.gz
 
-test_file ${BASE}.rmdup.pigtailtrim.fastq.gz
+test_file ${BASE}.pigtailtrim.fastq.gz
 
 
 
@@ -189,11 +182,11 @@ test_file ${BASE}.rmdup.pigtailtrim.fastq.gz
 
 echo "Trimming M13 sequence and recording barcode..."
 
-../sh/cutadapt_m13trim.sh ${BASE}.rmdup.pigtailtrim.fastq.gz \
+../sh/cutadapt_m13trim.sh ${BASE}.pigtailtrim.fastq.gz \
 	${BASE} \
-	${BASE}.rmdup.fulltrim.fastq.gz
+	${BASE}.fulltrim.fastq.gz
 
-test_file ${BASE}.rmdup.fulltrim.fastq.gz
+test_file ${BASE}.fulltrim.fastq.gz
 test_file ${BASE}.bcR
 test_file ${BASE}.bcL
 
@@ -225,26 +218,26 @@ test_file ${BASE}.bc.listpass.gz
 # Remove the reads that don't have a paired read
 
 echo "Extracting basenames of paired reads from trimmed FASTQ..."
-../sh/fastq_paired_basenames.sh ${BASE}.rmdup.fulltrim.fastq.gz \
-	${BASE}.rmdup.fulltrim.pairednames
+../sh/fastq_paired_basenames.sh ${BASE}.fulltrim.fastq.gz \
+	${BASE}.fulltrim.pairednames
 
-test_file ${BASE}.rmdup.fulltrim.pairednames
+test_file ${BASE}.fulltrim.pairednames
 
 
 echo "Identifying correct & non-inconsistent barcodes that belong to paired reads..."
 ../sh/barcode_paired.sh ${BASE}.bc.listpass.gz \
-	${BASE}.rmdup.fulltrim.pairednames ${BASE}.bc.listpass.paired
+	${BASE}.fulltrim.pairednames ${BASE}.bc.listpass.paired
 
 test_file ${BASE}.bc.listpass.paired
 
-rm ${BASE}.rmdup.fulltrim.pairednames
+rm ${BASE}.fulltrim.pairednames
 
 
 echo "Removing FASTQ reads that don't have a pair, or which don't have acceptable, consistent barcodes..."
-../sh/fastq_paired_passbc.sh ${BASE}.rmdup.fulltrim.fastq.gz \
-	${BASE}.bc.listpass.paired ${BASE}.rmdup.fulltrim.passbc.fastq.gz
+../sh/fastq_paired_passbc.sh ${BASE}.fulltrim.fastq.gz \
+	${BASE}.bc.listpass.paired ${BASE}.fulltrim.passbc.fastq.gz
 
-test_file ${BASE}.rmdup.fulltrim.passbc.fastq.gz
+test_file ${BASE}.fulltrim.passbc.fastq.gz
 
 
 echo "Compressing the paired barcode file..."
@@ -257,21 +250,21 @@ test_file ${BASE}.bc.listpass.paired.gz
 # Split the FASTQ into two files (if using Novoalign with paired reads)
 
 echo "Splitting the FASTQ file..."
-../sh/fastq_split.sh ${BASE}.rmdup.fulltrim.passbc.fastq.gz \
-	${BASE}.rmdup.fulltrim.passbc
+../sh/fastq_split.sh ${BASE}.fulltrim.passbc.fastq.gz \
+	${BASE}.fulltrim.passbc
 
-test_file ${BASE}.rmdup.fulltrim.passbc.1
-test_file ${BASE}.rmdup.fulltrim.passbc.2
+test_file ${BASE}.fulltrim.passbc.1
+test_file ${BASE}.fulltrim.passbc.2
 
 echo "Compressing the split FASTQ files..."
-gzip -c ${BASE}.rmdup.fulltrim.passbc.1 > ${BASE}.rmdup.fulltrim.passbc.1.fastq.gz
-gzip -c ${BASE}.rmdup.fulltrim.passbc.2 > ${BASE}.rmdup.fulltrim.passbc.2.fastq.gz
+gzip -c ${BASE}.fulltrim.passbc.1 > ${BASE}.fulltrim.passbc.1.fastq.gz
+gzip -c ${BASE}.fulltrim.passbc.2 > ${BASE}.fulltrim.passbc.2.fastq.gz
 
-test_file ${BASE}.rmdup.fulltrim.passbc.1.fastq.gz
-test_file ${BASE}.rmdup.fulltrim.passbc.2.fastq.gz
+test_file ${BASE}.fulltrim.passbc.1.fastq.gz
+test_file ${BASE}.fulltrim.passbc.2.fastq.gz
 
-rm ${BASE}.rmdup.fulltrim.passbc.1
-rm ${BASE}.rmdup.fulltrim.passbc.2
+rm ${BASE}.fulltrim.passbc.1
+rm ${BASE}.fulltrim.passbc.2
 
 
 
@@ -285,8 +278,8 @@ rm ${BASE}.rmdup.fulltrim.passbc.2
 
 echo "Aligning reads..."
 ../sh/novoalign.sh \
-	${BASE}.rmdup.fulltrim.passbc.1.fastq.gz \
-	${BASE}.rmdup.fulltrim.passbc.2.fastq.gz \
+	${BASE}.fulltrim.passbc.1.fastq.gz \
+	${BASE}.fulltrim.passbc.2.fastq.gz \
 	${INDEX} \
 	57 \
 	1 \
@@ -319,7 +312,7 @@ test_file ${BASE}.aligned.pp.bam
 # Put in the barcode information
 
 echo "Adding barcode information..."
-../sh/bam_barcode_add.sh ${BASE}.bc.listpass.paired \
+../sh/bam_barcode_add.sh ${BASE}.bc.listpass.paired.gz \
 	${BASE}.aligned.pp.bam \
 	${BASE}.aligned.header.sam \
 	${BASE}.aligned.pp.bc.bam
@@ -342,27 +335,38 @@ test_file ${BASE}.aligned.pp.bc.target.bam
 
 
 
-# MAYBE attempt to remove PCR duplicates again? Might want to think about it if
-# nothing is reduced the first time around.
+# Split the BAM output into as many BAM files as there are fish (that is, split
+# by barcode & position, since some barcodes are used for multiple fish). Split into SAMs, but convert them to BAMs.
 
+echo "Splitting BAM by target and barcode..."
+../sh/region_barcode_bamsplit.sh \
+	${BASE}.aligned.pp.bc.target.bam \
+	${BASE}.aligned.header.sam
 
+test_file groupcount
 
-# Split the SAM output into as many SAM files as there are fish (that is, split
-# by barcode & position, since some barcodes are used for multiple fish. Or
-# maybe add in plate/well info, and split with that and barcode?)
-
-
-
-# Convert the SAMs to BAMs
+i=0
+while 
+	[ $i -lt `head groupcount` ]
+do
+	i=$[ $i + 1 ]
+	test_file region_barcode.${i}.bam
+done
 
 
 
 # For each BAM...
-
-	# (MAYBE remove PCR duplicates again? Probably not necessary, but keep in
-	# mind)
-
-
+i=0
+while 
+	[ $i -lt `head groupcount` ]
+do
+	i=$[ $i + 1 ]
+	# Remove PCR duplicates
+	
+	"Removing PCR duplicates from region_barcode.${i}.bam..."
+	../sh/samtools_rmdup.sh region_barcode.${i}.bam region_barcode.${i}.rmdup.bam
+	
+	test_file region_barcode.${i}.rmdup.bam
 
 	# Make variant calls, ending up with VCF
 	# For the first time through, this is probably best done with bam2mpg,
@@ -373,7 +377,7 @@ test_file ${BASE}.aligned.pp.bc.target.bam
 	# Output an indication of the fish line, the individual ID, and if it's
 	# homozygous reference (0/0), het (1/0), or homozygous mutant (1/1).
 	
-
+done
 
 # Concatenate the output of each bam & arrange by fish line
 
