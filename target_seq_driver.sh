@@ -43,6 +43,9 @@ hash samtools 2>/dev/null || throw_error "samtools not found"
 hash bamtools 2>/dev/null || throw_error "bamtools not found"
 hash cutadapt 2>/dev/null || throw_error "cutadapt not found"
 hash novoalign 2>/dev/null || throw_error "novoalign not found"
+hash bam2mpg 2>/dev/null || throw_error "bam2mpg not found"
+hash mpg2vcf.pl 2>/dev/null || throw_error "mpg2vcf.pl not found"
+hash bgzip 2>/dev/null || throw_error "bgzip not found"
 
 # Get files via CLI
 print_usage()
@@ -52,13 +55,14 @@ Usage: target_seq_driver.sh [options] input.bam
 	Options:
 	-b	barcode file (required)
 	-h	print this help message and exit
-	-n	name	
+	-n	name
+	-r	reference FASTA file (required)
 	-x	path to alignment index (required)
 EOF
 }
 
 NAME="target"
-while getopts "b:hn:x:" OPTION
+while getopts "b:hn:r:x:" OPTION
 do
 	case $OPTION in
     	b)
@@ -70,6 +74,9 @@ do
     		;;
     	n)
     		NAME=$OPTARG
+    		;;
+    	r)
+    		REFERENCE=$OPTARG
     		;;
     	x)
     		INDEX=$OPTARG
@@ -86,7 +93,7 @@ BAMPATH="`cd \"$DIR\" 2>/dev/null && pwd -P || echo \"$DIR\"`/$FILE"
 BASE=`echo $FILE | sed 's/\(.*\).bam$/\1/'`
 
 ### Needs some means of checking to make sure BARCODE_REF, INDEX, and INBAM are
-### defined.
+### defined. REFERENCE, too.
 
 
 # Verify that the name does not have blanks
@@ -104,6 +111,8 @@ cd $WORKDIR
 
 # Adjust for relative paths
 INDEX=`echo $INDEX | awk '{ if($1 ~ /^\//){print}else{print "../"$1} }'`
+
+REFERENCE=`echo $REFERENCE | awk '{ if($1 ~ /^\//){print}else{print "../"$1} }'`
 
 # Verify the index exists
 function verify_index
@@ -363,8 +372,10 @@ do
 	i=$[ $i + 1 ]
 	# Remove PCR duplicates
 	
-	"Removing PCR duplicates from region_barcode.${i}.bam..."
-	../sh/samtools_rmdup.sh region_barcode.${i}.bam region_barcode.${i}.rmdup.bam
+	echo "Removing PCR duplicates from region_barcode.${i}.bam..."
+	../sh/samtools_rmdup.sh \
+		region_barcode.${i}.bam \
+		region_barcode.${i}.rmdup.bam
 	
 	test_file region_barcode.${i}.rmdup.bam
 
@@ -372,7 +383,26 @@ do
 	# For the first time through, this is probably best done with bam2mpg,
 	# followed by mpg2vcf.
 	
+	echo "Converting region_barcode.${i}.rmdup.bam from BAM to MPG..."
+	../sh/bam2mpg.sh \
+		${REFERENCE} \
+		region_barcode.${i}.rmdup.bam \
+		region_barcode.${i}.rmdup.mpg.gz
 	
+	test_file region_barcode.${i}.rmdup.mpg.gz
+	
+	
+	
+	echo "Converting MPG to SNV and DIV VCFs..."
+	../sh/mpg2vcf.sh \
+		region_barcode.${i}.rmdup \
+		${REFERENCE} \
+		region_barcode.${i}.rmdup.mpg.gz \
+		region_barcode.${i}.rmdup.snv.vcf.bgz \
+		region_barcode.${i}.rmdup.div.vcf.bgz
+	
+	test_file region_barcode.${i}.rmdup.snv.vcf.bgz
+	test_file region_barcode.${i}.rmdup.div.vcf.bgz
 	
 	# Output an indication of the fish line, the individual ID, and if it's
 	# homozygous reference (0/0), het (1/0), or homozygous mutant (1/1).
