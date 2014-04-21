@@ -17,7 +17,8 @@ do
 	i=$[ $i + 1 ]
 	
 	cat ${HEADER} region_barcode.${i}.sam \
-		| samtools view -S -b - > region_barcode.${i}.bam
+		| samtools view -S -b - \
+		| samtools sort -m 2000000000 - region_barcode.${i}
 	
 	rm region_barcode.${i}.sam
 	

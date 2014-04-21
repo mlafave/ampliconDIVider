@@ -372,12 +372,15 @@ do
 	i=$[ $i + 1 ]
 	# Remove PCR duplicates
 	
-	echo "Removing PCR duplicates from region_barcode.${i}.bam..."
-	../sh/samtools_rmdup.sh \
-		region_barcode.${i}.bam \
-		region_barcode.${i}.rmdup.bam
-	
-	test_file region_barcode.${i}.rmdup.bam
+	# The following has been commented out because it currently looks like using
+	# rmdup may actually hinder the detection of DIVs in this context. If this
+	# is brought back, remember to add .rmdup to the filenames that follow.
+# 	echo "Removing PCR duplicates from region_barcode.${i}.bam..."
+# 	../sh/samtools_rmdup.sh \
+# 		region_barcode.${i}.bam \
+# 		region_barcode.${i}.rmdup.bam
+# 	
+# 	test_file region_barcode.${i}.rmdup.bam
 
 	# Make variant calls, ending up with VCF
 	# For the first time through, this is probably best done with bam2mpg,
@@ -386,8 +389,8 @@ do
 	echo "Converting region_barcode.${i}.rmdup.bam from BAM to MPG..."
 	../sh/bam2mpg.sh \
 		${REFERENCE} \
-		region_barcode.${i}.rmdup.bam \
-		region_barcode.${i}.rmdup.mpg.gz
+		region_barcode.${i}.bam \
+		region_barcode.${i}.mpg.gz
 	
 	test_file region_barcode.${i}.rmdup.mpg.gz
 	
@@ -395,14 +398,14 @@ do
 	
 	echo "Converting MPG to SNV and DIV VCFs..."
 	../sh/mpg2vcf.sh \
-		region_barcode.${i}.rmdup \
+		region_barcode.${i} \
 		${REFERENCE} \
-		region_barcode.${i}.rmdup.mpg.gz \
-		region_barcode.${i}.rmdup.snv.vcf.bgz \
-		region_barcode.${i}.rmdup.div.vcf.bgz
+		region_barcode.${i}.mpg.gz \
+		region_barcode.${i}.snv.vcf.bgz \
+		region_barcode.${i}.div.vcf.bgz
 	
-	test_file region_barcode.${i}.rmdup.snv.vcf.bgz
-	test_file region_barcode.${i}.rmdup.div.vcf.bgz
+	test_file region_barcode.${i}.snv.vcf.bgz
+	test_file region_barcode.${i}.div.vcf.bgz
 	
 	# Output an indication of the fish line, the individual ID, and if it's
 	# homozygous reference (0/0), het (1/0), or homozygous mutant (1/1).
