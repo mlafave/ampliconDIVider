@@ -363,7 +363,7 @@ do
 done
 
 
-
+echo "Starting loop to check each region_barcode combo for deletions..."
 # For each BAM...
 i=0
 while 
@@ -410,18 +410,63 @@ do
 	# Output an indication of the fish line, the individual ID, and if it's
 	# homozygous reference (0/0), het (1/0), or homozygous mutant (1/1).
 	
+	# Check if there are any DIVs at all (specifically deletions).
+	
+	if 
+		[ `gunzip -c region_barcode.${i}.div.vcf.bgz | wc -l` -gt 8 ]
+	then
+		
+		echo "DIV detected in region_barcode.${i}.div.vcf.bgz."
+		
+		# If there IS a DIV, go back to region_barcode.${i}.bam. Select every
+		# sequence that contains a "D" in the CIGAR, then use sort and uniq -c
+		# to identify the most common sequence. 
+		
+		echo "Identifying the deletion with the most reads..."
+		../sh/most_freq_del.sh \
+			region_barcode.${i}.bam \
+			region_barcode.${i}.freqdel
+		
+		test_file region_barcode.${i}.freqdel
+		
+		# Take a line containing this sequence and run it through
+		# translate_cigar.pl. Print the sequence, which now contains the
+		# deletion, as well as the target and barcode information.
+		
+		echo "Visualizing the deletion..."
+				../sh/cigar_to_del.sh \
+			region_barcode.${i}.freqdel \
+			${BASE}.id_del
+		
+		test_file ${BASE}.id_del
+		
+	else 
+		
+		echo "No DIV detected in region_barcode.${i}.div.vcf.bgz."
+		
+		# If there's not a DIV, print some indication that this combination of
+		# target and barcode has no DIV.
+		
+		echo "Identifying the most frequent read..."
+		../sh/most_freq_overall.sh region_barcode.${i}.bam ${BASE}.id_del
+		
+		test_file ${BASE}.id_del
+		
+	fi
+		
 done
 
-# Concatenate the output of each bam & arrange by fish line
+echo "Loop finished."
+
+# ${BASE}.id_del should now contain information for each region/barcode combo. 
+# Add in the rest of the information from the barcode file and compress the
+# output.
+
+echo "Appending well and individual information to the deletion data..."
+../sh/append_well_info.sh ${BARCODE_REF} ${BASE}.id_del ${BASE}.deletions.gz
+
+test_file ${BASE}.deletions.gz
 
 
-
-# Output a file of four columns: fish line, number of 1/0, number of 1/1,
-# number of 1/1.
-
-
-
-	
-	
 
 exit
