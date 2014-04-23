@@ -469,4 +469,42 @@ test_file ${BASE}.deletions.gz
 
 
 
+echo "Making output directory..."
+mkdir $PWD/Output_${name}_${JOB_ID}
+
+function move_file
+{
+ if 
+   [ -e Output_${name}_${JOB_ID}/$1 ]
+ then 
+   throw_error "Can't move ${1}; a file with that name already exists in destination!"
+ else  
+   mv $1 Output_${name}_${JOB_ID}/ || throw_error "Didn't move ${1}!"
+ fi
+}
+
+echo "Moving output file to Output directory..."
+move_file ${BASE}.deletions.gz
+
+
+echo "Moving the Output directory..."
+if 
+  [ -e ../Output_${name}_${JOB_ID} ]
+then 
+  throw_error "Can't move Output_${name}_${JOB_ID}; a file with that name already exists in parent directory!"
+else  
+  mv Output_${name}_${JOB_ID}/ .. || throw_error "Didn't move Output_${name}_${JOB_ID}!"
+fi 
+
+
+
+# echo ""
+# echo "Removing working directory and files..."
+# cd ..
+# rm -r $workdir
+
+
+echo ""
+echo "$0 finished!"
+
 exit
