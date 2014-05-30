@@ -201,11 +201,40 @@ test_file ${BASE}.bcL
 
 
 
+# Identify the fragments with reads in which M13 showed up more than once
+
+echo "Finding bad reads with inverted M13..."
+
+../sh/barcode_doubleblacklist.sh \
+	${BASE} \
+	${BASE}.m13blacklist
+
+test_file ${BASE}.m13blacklist
+
+
+
+# Remove the fragments for which M13 showed up more than once in at least one read
+
+echo "Removing fragments with bad inverted-M13 reads..."
+
+../sh/barcode_remove_invertedm13.sh \
+	${BASE} \
+	${BASE}.m13blacklist \
+	${BASE}.bcL.noM13invert \
+	${BASE}.bcR.noM13invert
+
+test_file ${BASE}.bcL.noM13invert
+test_file ${BASE}.bcR.noM13invert
+
+# (Can now remove the original bcL and bcR, if desired; can also remove the blacklist)
+
+
+
 # Remove reads for which the barcodes do not agree
 
 echo "Identifying reads for which the barcodes do not agree, to be removed later..."
 
-../perl/compare_barcodes.pl ${BASE}.bcL ${BASE}.bcR \
+../perl/compare_barcodes.pl ${BASE}.bcL.noM13invert ${BASE}.bcR.noM13invert \
 	| sort | gzip -c > ${BASE}.bc.agree.gz
 
 test_file ${BASE}.bc.agree.gz
