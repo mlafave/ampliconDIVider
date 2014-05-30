@@ -25,7 +25,7 @@ source ~/.bashrc
 bam2mpg \
 	--qual_filter 20 \
 	--bam_filter '-q31' \
-	--pileup_filter '-B -A' \
+	--pileup_filter '-B' \
 	--ds_coverage 0 \
 	${REFERENCE} \
 	${INBAM} \
