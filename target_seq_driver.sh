@@ -215,16 +215,26 @@ test_file ${BASE}.m13blacklist
 
 # Remove the fragments for which M13 showed up more than once in at least one read
 
-echo "Removing fragments with bad inverted-M13 reads..."
+echo "Removing fragments with bad inverted-M13 reads."
+echo "Operating on bcL..."
 
-../sh/barcode_remove_invertedm13.sh \
-	${BASE} \
+../sh/barcode_remove_blacklisted.sh \
+	${BASE}.bcL \
 	${BASE}.m13blacklist \
-	${BASE}.bcL.noM13invert \
-	${BASE}.bcR.noM13invert
+	${BASE}.bcL.noM13invert
 
 test_file ${BASE}.bcL.noM13invert
+
+echo "Operating on bcR..."
+
+../sh/barcode_remove_blacklisted.sh \
+	${BASE}.bcR \
+	${BASE}.m13blacklist \
+	${BASE}.bcR.noM13invert
+
 test_file ${BASE}.bcR.noM13invert
+
+
 
 # (Can now remove the original bcL and bcR, if desired; can also remove the blacklist)
 
@@ -421,7 +431,7 @@ do
 		region_barcode.${i}.bam \
 		region_barcode.${i}.mpg.gz
 	
-	test_file region_barcode.${i}.rmdup.mpg.gz
+	test_file region_barcode.${i}.mpg.gz
 	
 	
 	
