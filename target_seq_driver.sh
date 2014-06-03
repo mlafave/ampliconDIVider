@@ -171,19 +171,10 @@ test_file ${BASE}.fastq.gz
 
 
 
-# Trim off & discard pigtail sequences
-
-echo "Trimming pigtail..."
-../sh/cutadapt_pigtailtrim.sh ${BASE}.fastq.gz \
-	${BASE}.pigtailtrim.fastq.gz
-
-test_file ${BASE}.pigtailtrim.fastq.gz
-
-
-
 # Trim off the barcodes in such a way that the fragment name is recorded &
 # associated with the barcode. 
-# The fragment will be barcode, then M13, then nothing but genomic.
+# The fragment will be barcode, then M13, then nothing but genomic (with a
+# possible pigtail at the end).
 # The easiest way to do this is by trimming the M13 and looking for wildcards.
 
 
@@ -193,11 +184,21 @@ echo "Trimming M13 sequence and recording barcode..."
 
 ../sh/cutadapt_m13trim.sh ${BASE}.pigtailtrim.fastq.gz \
 	${BASE} \
+	${BASE}.m13trim.fastq.gz
+
+test_file ${BASE}.m13trim.fastq.gz
+test_file ${BASE}.bcR
+test_file ${BASE}.bcL
+
+
+
+# Trim off & discard pigtail sequences
+
+echo "Trimming pigtail..."
+../sh/cutadapt_pigtailtrim.sh ${BASE}.m13trim.fastq.gz \
 	${BASE}.fulltrim.fastq.gz
 
 test_file ${BASE}.fulltrim.fastq.gz
-test_file ${BASE}.bcR
-test_file ${BASE}.bcL
 
 
 
