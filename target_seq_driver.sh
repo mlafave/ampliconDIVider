@@ -209,7 +209,7 @@ echo "Finding bad reads with inverted M13..."
 	${BASE} \
 	${BASE}.m13blacklist
 
-test_file ${BASE}.m13blacklist
+test_file ${BASE}.intraM13blacklist
 
 
 
@@ -220,7 +220,52 @@ echo "Operating on bcL..."
 
 ../sh/barcode_remove_blacklisted.sh \
 	${BASE}.bcL \
-	${BASE}.m13blacklist \
+	${BASE}.intraM13blacklist \
+	${BASE}.bcL.nointraM13invert
+
+test_file ${BASE}.bcL.nointraM13invert
+
+echo "Operating on bcR..."
+
+../sh/barcode_remove_blacklisted.sh \
+	${BASE}.bcR \
+	${BASE}.intraM13blacklist \
+	${BASE}.bcR.nointraM13invert
+
+test_file ${BASE}.bcR.nointraM13invert
+
+
+
+# (Can now remove the original bcL and bcR, if desired; can also remove the blacklist)
+
+
+
+# Identify the fragments for which M13 showed up in the same orientation on both
+# reads (which is bad)
+
+echo "Finding bad fragments with inverted-M13."
+echo "Operating on bcL..."
+
+../sh/barcode_interread_blacklist.sh \
+	${BASE}.bcL.nointraM13invert \
+	${BASE}.bcL.interM13blacklist
+
+test_file ${BASE}.bcL.interM13blacklist
+
+echo "Operating on bcR..."
+
+../sh/barcode_interread_blacklist.sh \
+	${BASE}.bcR.nointraM13invert \
+	${BASE}.bcR.interM13blacklist
+
+test_file ${BASE}.bcR.interM13blacklist
+
+echo "Removing fragments with bad inverted-M13 fragments."
+echo "Operating on bcL..."
+
+../sh/barcode_remove_blacklisted.sh \
+	${BASE}.bcL.nointraM13invert \
+	${BASE}.bcL.interM13blacklist \
 	${BASE}.bcL.noM13invert
 
 test_file ${BASE}.bcL.noM13invert
@@ -228,15 +273,11 @@ test_file ${BASE}.bcL.noM13invert
 echo "Operating on bcR..."
 
 ../sh/barcode_remove_blacklisted.sh \
-	${BASE}.bcR \
-	${BASE}.m13blacklist \
+	${BASE}.bcR.nointraM13invert \
+	${BASE}.bcR.interM13blacklist \
 	${BASE}.bcR.noM13invert
 
 test_file ${BASE}.bcR.noM13invert
-
-
-
-# (Can now remove the original bcL and bcR, if desired; can also remove the blacklist)
 
 
 

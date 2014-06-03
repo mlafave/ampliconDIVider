@@ -3,7 +3,6 @@
 BCFILE=$1
 BADFRAGLIST=$2
 BCOUT=$3
-BCROUT=$4
 
 source ~/.bashrc
 
