@@ -370,8 +370,9 @@ echo "Aligning reads..."
 	${BASE}.fulltrim.passbc.1.fastq.gz \
 	${BASE}.fulltrim.passbc.2.fastq.gz \
 	${INDEX} \
-	57 \
-	1 \
+	300 \
+	309 \
+	1259 \
 	${BASE}.aligned.bam
 
 test_file ${BASE}.aligned.bam

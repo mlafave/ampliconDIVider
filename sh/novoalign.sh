@@ -3,9 +3,10 @@
 INFASTQ1=$1
 INFASTQ2=$2
 INDEX=$3
-MEANFRAG=$4
-FRAGSD=$5
-OUTBAM=$6
+LENGTH=$4
+MEANFRAG=$5
+FRAGSD=$6
+OUTBAM=$7
 
 source ~/.bashrc
 
@@ -14,6 +15,7 @@ novoalign \
 	-f ${INFASTQ1} ${INFASTQ2} \
 	-F STDFQ \
 	--Q2Off \
+	-n ${LENGTH} \
 	-p -1 \
 	-o SAM \
 	-i PE ${MEANFRAG},${FRAGSD} \
