@@ -182,7 +182,7 @@ test_file ${BASE}.fastq.gz
 
 echo "Trimming M13 sequence and recording barcode..."
 
-../sh/cutadapt_m13trim.sh ${BASE}.pigtailtrim.fastq.gz \
+../sh/cutadapt_m13trim.sh ${BASE}.fastq.gz \
 	${BASE} \
 	${BASE}.m13trim.fastq.gz
 
@@ -208,7 +208,7 @@ echo "Finding bad reads with inverted M13..."
 
 ../sh/barcode_doubleblacklist.sh \
 	${BASE} \
-	${BASE}.m13blacklist
+	${BASE}.intraM13blacklist
 
 test_file ${BASE}.intraM13blacklist
 
