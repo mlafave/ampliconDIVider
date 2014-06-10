@@ -46,6 +46,7 @@ hash novoalign 2>/dev/null || throw_error "novoalign not found"
 hash bam2mpg 2>/dev/null || throw_error "bam2mpg not found"
 hash mpg2vcf.pl 2>/dev/null || throw_error "mpg2vcf.pl not found"
 hash bgzip 2>/dev/null || throw_error "bgzip not found"
+hash sam_pairwise_view.pl 2>/dev/null || throw_error "sam_pairwise_view.pl not found"
 
 # Get files via CLI
 print_usage()
@@ -505,22 +506,22 @@ do
 		# to identify the most common sequence. 
 		
 		echo "Identifying the deletion with the most reads..."
-		../sh/most_freq_del.sh \
+		../sh/most_freq_div.sh \
 			region_barcode.${i}.bam \
-			region_barcode.${i}.freqdel
+			region_barcode.${i}.freqdiv
 		
-		test_file region_barcode.${i}.freqdel
+		test_file region_barcode.${i}.freqdiv
 		
 		# Take a line containing this sequence and run it through
 		# translate_cigar.pl. Print the sequence, which now contains the
 		# deletion, as well as the target and barcode information.
 		
-		echo "Visualizing the deletion..."
-				../sh/cigar_to_del.sh \
-			region_barcode.${i}.freqdel \
-			${BASE}.id_del
+		echo "Visualizing the DIV..."
+		../sh/cigar_and_md_to_div.sh \
+			region_barcode.${i}.freqdiv \
+			${BASE}.id_div
 		
-		test_file ${BASE}.id_del
+		test_file ${BASE}.id_div
 		
 	else 
 		
@@ -530,9 +531,9 @@ do
 		# target and barcode has no DIV.
 		
 		echo "Identifying the most frequent read..."
-		../sh/most_freq_overall.sh region_barcode.${i}.bam ${BASE}.id_del
+		../sh/most_freq_overall.sh region_barcode.${i}.bam ${BASE}.id_div
 		
-		test_file ${BASE}.id_del
+		test_file ${BASE}.id_div
 		
 	fi
 		
@@ -540,28 +541,28 @@ done
 
 echo "Loop finished."
 
-# ${BASE}.id_del should now contain information for each region/barcode combo. 
+# ${BASE}.id_div should now contain information for each region/barcode combo. 
 # Add in the rest of the information from the barcode file and compress the
 # output.
 
 echo "Appending well and individual information to the deletion data..."
-../sh/append_well_info.sh ${BARCODE_REF} ${BASE}.id_del ${BASE}.deletions.gz
+../sh/append_well_info.sh ${BARCODE_REF} ${BASE}.id_div ${BASE}.deletions.gz
 
 test_file ${BASE}.deletions.gz
 
 
 
 echo "Making output directory..."
-mkdir $PWD/Output_${name}_${JOB_ID}
+mkdir $PWD/Output_${NAME}_${JOB_ID}
 
 function move_file
 {
  if 
-   [ -e Output_${name}_${JOB_ID}/$1 ]
+   [ -e Output_${NAME}_${JOB_ID}/$1 ]
  then 
    throw_error "Can't move ${1}; a file with that name already exists in destination!"
  else  
-   mv $1 Output_${name}_${JOB_ID}/ || throw_error "Didn't move ${1}!"
+   mv $1 Output_${NAME}_${JOB_ID}/ || throw_error "Didn't move ${1}!"
  fi
 }
 
@@ -571,11 +572,11 @@ move_file ${BASE}.deletions.gz
 
 echo "Moving the Output directory..."
 if 
-  [ -e ../Output_${name}_${JOB_ID} ]
+  [ -e ../Output_${NAME}_${JOB_ID} ]
 then 
-  throw_error "Can't move Output_${name}_${JOB_ID}; a file with that name already exists in parent directory!"
+  throw_error "Can't move Output_${NAME}_${JOB_ID}; a file with that name already exists in parent directory!"
 else  
-  mv Output_${name}_${JOB_ID}/ .. || throw_error "Didn't move Output_${name}_${JOB_ID}!"
+  mv Output_${NAME}_${JOB_ID}/ .. || throw_error "Didn't move Output_${NAME}_${JOB_ID}!"
 fi 
 
 
