@@ -13,11 +13,13 @@ OUTPUT=$3
 awk '{print $3"_"$6"\t"$0}' ${BARCODE_REF} \
 	| sort -k1,1 > ${BARCODE_REF}.idsort
 
+
 sort -k1,1 ${INPUT} \
-	| join -j1 - ${BARCODE_REF}.idsort \
-	| awk -v OFS="\t" '{print $3,$4,$5,$6,$7,$8,$2}' \
-	| sort -k1,1 -k2,2 \
+	| join -t $'\t' -j1 ${BARCODE_REF}.idsort - \
+	| sort -k2,2 -k3,3 \
+	| awk -F"\t" -v OFS="\t" '{print $2,$3,$4,$5,$6,$7"\n"$8"\n"$9"\n"$10}' \
 	| gzip -c > ${OUTPUT}
+
 
 rm ${BARCODE_REF}.idsort
 
