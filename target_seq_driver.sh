@@ -57,13 +57,14 @@ Usage: target_seq_driver.sh [options] input.bam
 	-b	barcode file (required)
 	-h	print this help message and exit
 	-n	name
+	-p	primers of long fragments
 	-r	reference FASTA file (required)
 	-x	path to alignment index (required)
 EOF
 }
 
 NAME="target"
-while getopts "b:hn:r:x:" OPTION
+while getopts "b:hn:p:r:x:" OPTION
 do
 	case $OPTION in
     	b)
@@ -75,6 +76,9 @@ do
     		;;
     	n)
     		NAME=$OPTARG
+    		;;
+    	p)
+    		LONGFRAGPRIMERS=$OPTARG
     		;;
     	r)
     		REFERENCE=$OPTARG
@@ -144,6 +148,12 @@ function verify_index
 cp ../${BARCODE_REF} .
 
 test_file $BARCODE_REF
+
+# Same thing for the longfragment primers, if they're defined
+
+if [ ${LONGFRAGPRIMERS} ]; then cp ../${LONGFRAGPRIMERS} .; fi
+
+test_file ${LONGFRAGPRIMERS}
 
 ### That won't work if a path is used - may need to fix that later
 
@@ -335,6 +345,69 @@ echo "Compressing the paired barcode file..."
 gzip ${BASE}.bc.listpass.paired
 
 test_file ${BASE}.bc.listpass.paired.gz
+
+
+
+# If the primers of the long fragments were specified, extract the reads that
+# correspond to the "long" fragments (primers from two different targets). Find
+# the fragments that end in said primers to do so.
+
+if [ ${LONGFRAGPRIMERS} ]
+then
+	
+	# Capture the length of the shortest primer used in long fragments
+		
+	SHORTPRIMER=`../sh/longfrag_shortest-primer-length.sh ${LONGFRAGPRIMERS}`
+	
+	
+	
+	# Identify all reads that begin with a primer that MIGHT be from a long fragment.
+	
+	../sh/primer_longfrag_whittle.sh \
+		${SHORTPRIMER} \
+		${LONGFRAGPRIMERS} \
+		${BASE}.fulltrim.passbc.fastq.gz \
+		${BASE}.fulltrim.passbc.possiblelongfrag.${SHORTPRIMER}.tabfq
+
+	test_file ${BASE}.fulltrim.passbc.possiblelongfrag.${SHORTPRIMER}.tabfq
+	test_file ${LONGFRAGPRIMERS}.2col
+	
+	
+	
+	# Compare paired reads to find the reads that DID come from a long fragment.
+	
+	../perl/primer_longfrag_find.pl \
+		${LONGFRAGPRIMERS}.2col \
+		${BASE}.fulltrim.passbc.possiblelongfrag.${SHORTPRIMER}.tabfq \
+		> ${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.tabfq
+	
+	test_file ${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.tabfq
+	
+	
+	
+	# Shorten the primers from the primer list to the length of the shortest
+	# among them, and rearrange to prepare for a join.
+	
+	../sh/longfrag_shorten-primer.sh \
+		${SHORTPRIMER} \
+		${LONGFRAGPRIMERS} \
+		min_${LONGFRAGPRIMERS}_prejoin
+		
+	test_file min_${LONGFRAGPRIMERS}_prejoin
+	
+	
+	
+	# Add the fragment ID to the reads, count how often each read appeared, and
+	# report the top ten reads for each fragment.
+	
+	../sh/longfrag_top10.sh \
+		${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.tabfq \
+		min_${LONGFRAGPRIMERS}_prejoin \
+		${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.top10.gz
+				
+	test_file ${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.top10.gz
+
+fi
 
 
 
@@ -546,9 +619,9 @@ echo "Loop finished."
 # output.
 
 echo "Appending well and individual information to the deletion data..."
-../sh/append_well_info.sh ${BARCODE_REF} ${BASE}.id_div ${BASE}.deletions.gz
+../sh/append_well_info.sh ${BARCODE_REF} ${BASE}.id_div ${BASE}.divs.gz
 
-test_file ${BASE}.deletions.gz
+test_file ${BASE}.divs.gz
 
 
 
@@ -567,7 +640,9 @@ function move_file
 }
 
 echo "Moving output file to Output directory..."
-move_file ${BASE}.deletions.gz
+move_file ${BASE}.divs.gz
+if [ ${LONGFRAGPRIMERS} ]; then move_file ${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.top10.gz; fi
+
 
 
 echo "Moving the Output directory..."
