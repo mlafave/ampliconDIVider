@@ -14,7 +14,7 @@ source ~/.bashrc
 # and barcode.
 
 cat ${INPUT} \
-	| sam_pairwise_view.pl > ${INPUT}.temp
+	| sam2pairwise > ${INPUT}.temp
 
 # Get the barcode, append to the other file
 awk '{print substr($20,6,length($20)-5)}' ${INPUT} >> ${INPUT}.temp

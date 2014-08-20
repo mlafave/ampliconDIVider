@@ -46,7 +46,7 @@ hash novoalign 2>/dev/null || throw_error "novoalign not found"
 hash bam2mpg 2>/dev/null || throw_error "bam2mpg not found"
 hash mpg2vcf.pl 2>/dev/null || throw_error "mpg2vcf.pl not found"
 hash bgzip 2>/dev/null || throw_error "bgzip not found"
-hash sam_pairwise_view.pl 2>/dev/null || throw_error "sam_pairwise_view.pl not found"
+hash sam2pairwise 2>/dev/null || throw_error "sam2pairwise not found"
 
 # Get files via CLI
 print_usage()
