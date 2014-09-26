@@ -17,11 +17,13 @@ The following programs must be in a directory in your $PATH, with the version at
 * bamtools v.2.3.0
 * bgzip
 
+In addition, the input BAM file should contain paired-end reads. The BAM files used in the paper are available from the NCBI Sequence Read Archive (http://www.ncbi.nlm.nih.gov/sra), under BioProject accession PRJNA262180. The rest of the input files are included in the `Varshney_et_al_input` directory.
+
 
 Usage
 -------
 
-	target_seq_driver.sh [options] input.bam
+	ampliconDIVider_driver.sh [options] input.bam
 
 Options:
 -b	barcode file (required): This file indicates the relationship between, plate, well, amplicon, founder, progeny ID, and 6 bp barcode. It has the following format:
@@ -42,7 +44,7 @@ The first two columns show the placement of each sample in a plate. The third co
 	man2a1_T2F/T1R_5:58517329-58543258	AGCTCCTACTGTGTTTGACTGC	TGCATGCAGTTTCATGTTGA
 	man2b1_T2F/T1R_11:32098232-32100164	CTCAAGAAAATGCAGGTTTGC	ATCCAGCATGCAGGTGTTC
 	
-The first column is the amplicon ID. This can be written the same way as the third column in `-b`, but . The second and third columns are the sequences of the primers used for the "long" version of the amplicon, written 5' to 3'.
+The first column is the amplicon ID. This can be written the same way as the third column in `-b`, but it doesn't need to be (for example, colons are allowed). The second and third columns are the sequences of the primers used for the "long" version of the amplicon, written 5' to 3'.
 
 -r	reference FASTA file (required): A FASTA file containing the sequence of the amplicons of interest. This should be the same file used to create the index for the aligner. If some of the target amplicons are nested within others, it's better to not include the larger of the two. For example, if you have amplicons from position 100 to 200, 600 to 700, and 100 to 700, then the one from 100 to 700 should not be included in this file or the aligner index, or it may cause alignment difficulites for the shorter amplicons. The hypothetical 100 to 700 sample can instead be monitored by using the `-p` option.
 
@@ -54,7 +56,7 @@ The first column is the amplicon ID. This can be written the same way as the thi
 Output
 -------
 
-The default output is `Output_${NAME}_${JOB_ID}`, where NAME is the value from -n, and JOB_ID is present if the job were submitted via `qsub`. Each sample (where a sample is defined as a unique combination of target name, founder ID, progeny ID, and barcode) is represented. If the bam2mpg/mpg2vcf variant caller identified a DIV in a sample, ampliconDIVider finds the most frequently represented DIV-contaning sequence. A read matching this sequence is then printed as a pairwise alignment, with the read on the top and the reference on the bottom. If no DIV was detected by the variant caller, this is reported in a way that maintains the four-line periodicity of the output.
+The default final output is `${BASE}.divs.gz`, where BASE is the basename of the BAM input. This file is located in the `Output_${NAME}_${JOB_ID}` directory, where NAME is the value from -n, and JOB_ID is present if the job were submitted via `qsub`. Each sample (where a sample is defined as a unique combination of target name, founder ID, progeny ID, and barcode) is represented. If the bam2mpg/mpg2vcf variant caller identified a DIV in a sample, ampliconDIVider finds the most frequently represented DIV-contaning sequence. A read matching this sequence is then printed as a pairwise alignment, with the read on the top and the reference on the bottom. If no DIV was detected by the variant caller, this is reported in a way that maintains the four-line periodicity of the output.
 For example, a DIV-containing sample would look like this:
 
 	Plate1  D1      CochT1_chr17_28807187-28807424  1F      4       TTCTAG
@@ -68,6 +70,16 @@ A sample without a DIV would look like this:
 	CTGAACACCATGAGCGTAAGAGCTGAGGTAGTTTGTCCTCCCTTGCAGTCCGTGAACCTCCACTGGTCCACCAGACAGACCTATGATTCCTCTGGATGAAAGACAAACGTTTCCTTGTTATTGGAGTCTAGCAAGTCTGCAACTGTATCGTTTAAAGTGAAAACTGTACCTGTGAATGGCTGCTCCGCATATGCTGGAAATAGAGGCATAAACTCCAGAACCAAACACTGAGAGGCTCAAAGATCGGAAGAGCACACGTCTGAACTCCAGTCACAA
 	no_div
 	no_div
+
+If the `-p` option was used, the output directory will also contain a file called `${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.top10.gz`. The file has three columns: the number of times that entry appeared for a given amplicon, the ID of the amplicon from the first column of the `-p` file, and a sequence that matches the sequences from the second and third column of the `-p` file. Although the reads will be written 5’ to 3’, they are not necessarily all from the “forward” strand. Only the 10 most frequent sequences for each target are displayed.
+
+In addition, most of the intermediate files are kept in the `Workdir_${NAME}_${JOB_ID}` directory. These can be useful for viewing the reads within a given sample, or checking the evidence for a variant call. Each unique combination of target region and barcode is assigned an integer (stored internally as `${i}`), which appears in the name of each file:
+
+* `region_barcode.${i}.bam`: All reads that aligned to the specified target with the specified barcode. All reads in these files should be properly paired.
+* `region_barcode.${i}.mpg.gz`: The Most Probable Genotype scores for the sample. These scores are used to infer which variants are called.
+* `region_barcode.${i}.snv.vcf.bgz`: The single nucleotide variants, in variant call format.
+* `region_barcode.${i}.div.vcf.bgz`: The deletion and insertion variants, in variant call format.
+* `region_barcode.${i}.freqdiv`: If the sample had any variants called in `region_barcode.${i}.div.vcf.bgz`, this file contains the most frequently-occurring DIV-containing read, in headerless SAM format.
 
 
 License
@@ -94,5 +106,4 @@ Developmental Genomics Section, Translational and Functional Genomics Branch
 NHGRI, NIH
 
 Email: matthew.lafave [at sign] nih.gov
-
 
