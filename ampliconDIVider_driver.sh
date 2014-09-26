@@ -1,19 +1,5 @@
 #!/usr/bin/env bash
 
-# Email address, and options, to whom reports should be sent.
-# The -M is for the address, the -m is for when to send email.
-# a=abort b=begin e=end s=suspend n=none
-#$ -M matthew.lafave@nih.gov
-#$ -m abes
-
-# Redirect the STDOUT and STDERR files to the jobs directory
-#$ -o $HOME/jobs/$JOB_ID_$JOB_NAME.stdout
-#$ -e $HOME/jobs/$JOB_ID_$JOB_NAME.error
-
-# Operate in the current directory
-#$ -cwd
-
-
 # Set up functions for file testing & error reporting.
 function throw_error
 {
