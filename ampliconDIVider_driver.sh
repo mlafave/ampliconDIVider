@@ -54,7 +54,7 @@ while getopts "b:hn:p:r:x:" OPTION
 do
 	case $OPTION in
     	b)
-    		BARCODE_REF=$OPTARG
+    		BARCODE_PATH=$OPTARG
     		;;
     	h)
     		print_usage
@@ -64,7 +64,7 @@ do
     		NAME=$OPTARG
     		;;
     	p)
-    		LONGFRAGPRIMERS=$OPTARG
+    		LONGFRAGPRIMERS_PATH=$OPTARG
     		;;
     	r)
     		REFERENCE=$OPTARG
@@ -77,14 +77,31 @@ done
 shift $((OPTIND-1))
 INBAM=$1
 
+test_file $INBAM
+
 DIR=`dirname $INBAM`
 FILE=`basename $INBAM`
 BAMPATH="`cd \"$DIR\" 2>/dev/null && pwd -P || echo \"$DIR\"`/$FILE"
 
 BASE=`echo $FILE | sed 's/\(.*\).bam$/\1/'`
 
-### Needs some means of checking to make sure BARCODE_REF, INDEX, and INBAM are
-### defined. REFERENCE, too.
+
+# Identify the absolute path to the barcode file, so it can be copied later.
+
+BARCODE_DIR=`dirname $BARCODE_PATH`
+BARCODE_REF=`basename $BARCODE_PATH`
+BARCODE_PATH="`cd \"$BARCODE_DIR\" 2>/dev/null && pwd -P || echo \"$BARCODE_DIR\"`/$BARCODE_REF"
+
+
+# If -p was used, identify the absolute path to the long fragment file, so it
+
+# can be copied later.
+if [ ${LONGFRAGPRIMERS_PATH} ]
+then
+	LONGFRAGPRIMERS_DIR=`dirname ${LONGFRAGPRIMERS_PATH}`
+	LONGFRAGPRIMERS=`basename ${LONGFRAGPRIMERS_PATH}`
+	LONGFRAGPRIMERS_PATH="`cd \"$LONGFRAGPRIMERS_DIR\" 2>/dev/null && pwd -P || echo \"$LONGFRAGPRIMERS_DIR\"`/$LONGFRAGPRIMERS"
+fi
 
 
 # Verify that the name does not have blanks
@@ -104,6 +121,8 @@ cd $WORKDIR
 INDEX=`echo $INDEX | awk '{ if($1 ~ /^\//){print}else{print "../"$1} }'`
 
 REFERENCE=`echo $REFERENCE | awk '{ if($1 ~ /^\//){print}else{print "../"$1} }'`
+
+
 
 # Verify the index exists
 function verify_index
@@ -125,25 +144,23 @@ function verify_index
  fi
 }
 
-### I'll need to see how novoalign deals with index basenames
-
 # The barcode file should be reasonably small, so I'll make a local copy in the
 # working directory. That way, there's no need to worry if the main file is
 # altered or moved in the meantime.
 
-cp ../${BARCODE_REF} .
+cp ${BARCODE_PATH} .
+
+# From here on, refer to that copy as BARCODE_REF, defined by basename, etc. above.
 
 test_file $BARCODE_REF
 
 # Same thing for the longfragment primers, if they're defined
 
-if [ ${LONGFRAGPRIMERS} ]; then cp ../${LONGFRAGPRIMERS} .; fi
-
-test_file ${LONGFRAGPRIMERS}
-
-### That won't work if a path is used - may need to fix that later
-
-
+if [ ${LONGFRAGPRIMERS} ]
+then
+	cp ${LONGFRAGPRIMERS_PATH} .
+	test_file ${LONGFRAGPRIMERS}
+fi
 
 
 
