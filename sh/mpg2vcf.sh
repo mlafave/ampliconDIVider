@@ -21,6 +21,8 @@ mpg2vcf.pl \
 	--mpg ${INMPG} \
 	--snv_outfile ${OUTSNV} \
 	--div_outfile ${OUTDIV} \
-	--notabix
+
+if [ -f ${OUTSNV}.tbi ] ; then rm ${OUTSNV}.tbi ; fi
+if [ -f ${OUTDIV}.tbi ] ; then rm ${OUTDIV}.tbi ; fi
 
 exit

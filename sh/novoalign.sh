@@ -14,12 +14,10 @@ novoalign \
 	-d ${INDEX} \
 	-f ${INFASTQ1} ${INFASTQ2} \
 	-F STDFQ \
-	--Q2Off \
 	-n ${LENGTH} \
 	-p -1 \
 	-o SAM \
 	-i PE ${MEANFRAG},${FRAGSD} \
-	-c 10 \
 	| samtools view -S -b - > ${OUTBAM}
 
 exit

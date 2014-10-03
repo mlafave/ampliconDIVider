@@ -423,12 +423,18 @@ echo "Splitting the FASTQ file..."
 test_file ${BASE}.fulltrim.passbc.1
 test_file ${BASE}.fulltrim.passbc.2
 
-echo "Compressing the split FASTQ files..."
-gzip -c ${BASE}.fulltrim.passbc.1 > ${BASE}.fulltrim.passbc.1.fastq.gz
-gzip -c ${BASE}.fulltrim.passbc.2 > ${BASE}.fulltrim.passbc.2.fastq.gz
+# echo "Compressing the split FASTQ files..."
+# gzip -c ${BASE}.fulltrim.passbc.1 > ${BASE}.fulltrim.passbc.1.fastq.gz
+# gzip -c ${BASE}.fulltrim.passbc.2 > ${BASE}.fulltrim.passbc.2.fastq.gz
+# 
+# test_file ${BASE}.fulltrim.passbc.1.fastq.gz
+# test_file ${BASE}.fulltrim.passbc.2.fastq.gz
 
-test_file ${BASE}.fulltrim.passbc.1.fastq.gz
-test_file ${BASE}.fulltrim.passbc.2.fastq.gz
+mv ${BASE}.fulltrim.passbc.1 ${BASE}.fulltrim.passbc.1.fastq
+mv ${BASE}.fulltrim.passbc.2 ${BASE}.fulltrim.passbc.2.fastq
+
+test_file ${BASE}.fulltrim.passbc.1.fastq
+test_file ${BASE}.fulltrim.passbc.2.fastq
 
 rm ${BASE}.fulltrim.passbc.1
 rm ${BASE}.fulltrim.passbc.2
@@ -445,8 +451,8 @@ rm ${BASE}.fulltrim.passbc.2
 
 echo "Aligning reads..."
 ../sh/novoalign.sh \
-	${BASE}.fulltrim.passbc.1.fastq.gz \
-	${BASE}.fulltrim.passbc.2.fastq.gz \
+	${BASE}.fulltrim.passbc.1.fastq \
+	${BASE}.fulltrim.passbc.2.fastq \
 	${INDEX} \
 	300 \
 	309 \
