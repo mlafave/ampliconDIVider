@@ -19,6 +19,8 @@ The following programs must be in a directory in your $PATH, with the version at
 * bamtools v.2.3.0
 * bgzip
 
+ampliconDIVider_driver.sh uses relative paths to call sub-scripts, so the program should be run from in the ampliconDIVider/ directory.
+
 In addition, the input BAM file should contain paired-end reads. The BAM files used in the paper are available from the NCBI Sequence Read Archive (http://www.ncbi.nlm.nih.gov/sra), under BioProject accession PRJNA262180. The rest of the input files are included in the `Varshney_et_al_input` directory.
 
 
