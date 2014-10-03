@@ -38,7 +38,7 @@ hash sam2pairwise 2>/dev/null || throw_error "sam2pairwise not found"
 print_usage()
 {
   cat <<EOF
-Usage: target_seq_driver.sh [options] input.bam
+Usage: ./ampliconDIVider_driver.sh [options] input.bam
 	Options:
 	-b	barcode file (required)
 	-h	print this help message and exit
