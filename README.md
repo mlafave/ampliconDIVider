@@ -7,11 +7,13 @@ The ampliconDIVider contains the scripts used to identify deletion and insertion
 Requirements
 ------------
 
+ampliconDIVider is designed to run on Linux. It can also run on OS X, but please be aware that it wasn't primarily intended to do so.
+
 The following programs must be in a directory in your $PATH, with the version at least as recent as those listed here:
 * Perl v.5.8.8
 * cutadapt v.1.3
 * novoalign v.3.02.07
-* bam2mpg and mpg2vcf.pl (available from http://research.nhgri.nih.gov/software/bam2mpg/) 
+* bam2mpg and mpg2vcf.pl (available from http://research.nhgri.nih.gov/software/bam2mpg/. It may be necessary to set $PERL5LIB to the lib/ directory within the bam2mpg/ directory.) 
 * sam2pairwise v.1.0.0 (available from http://www.github.com/mlafave/sam2pairwise)
 * samtools v.0.1.19-44428cd
 * bamtools v.2.3.0
@@ -80,6 +82,18 @@ In addition, most of the intermediate files are kept in the `Workdir_${NAME}_${J
 * `region_barcode.${i}.snv.vcf.bgz`: The single nucleotide variants, in variant call format.
 * `region_barcode.${i}.div.vcf.bgz`: The deletion and insertion variants, in variant call format.
 * `region_barcode.${i}.freqdiv`: If the sample had any variants called in `region_barcode.${i}.div.vcf.bgz`, this file contains the most frequently-occurring DIV-containing read, in headerless SAM format.
+
+Note that the variant caller, bam2mpg, is not deterministic for samples with a high read count, so multiple runs of the same input may result in slightly different results.
+
+
+Testing ampliconDIVider
+-----------------------
+
+To test the program, first create a novoalign index to `Varshney_et_al_input/set1_amplicons.fa`, as described above. Then, run the following command from within the ampliconDIVider/ directory:
+
+	./ampliconDIVider_driver.sh -b Varshney_et_al_input/set1_barcodes -n example -p Varshney_et_al_input/set1_long_fragments -r Varshney_et_al_input/set1_amplicons.fa -x ~/path/to/set1_amplicons.nix example.bam
+	
+The output should be the same as the files in the Example_output/ directory.
 
 
 License
