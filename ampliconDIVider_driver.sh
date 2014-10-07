@@ -75,6 +75,9 @@ do
     esac
 done
 shift $((OPTIND-1))
+
+if [ ! $1 ]; then throw_error "No BAM input."; fi
+
 INBAM=$1
 
 test_file $INBAM
@@ -94,7 +97,6 @@ BARCODE_PATH="`cd \"$BARCODE_DIR\" 2>/dev/null && pwd -P || echo \"$BARCODE_DIR\
 
 
 # If -p was used, identify the absolute path to the long fragment file, so it
-
 # can be copied later.
 if [ ${LONGFRAGPRIMERS_PATH} ]
 then
@@ -144,13 +146,14 @@ function verify_index
  fi
 }
 
-# The barcode file should be reasonably small, so I'll make a local copy in the
+# The barcode file should be reasonably small, so make a local copy in the
 # working directory. That way, there's no need to worry if the main file is
 # altered or moved in the meantime.
 
 cp ${BARCODE_PATH} .
 
-# From here on, refer to that copy as BARCODE_REF, defined by basename, etc. above.
+# From here on, refer to that copy as BARCODE_REF, defined by basename, etc.
+# above.
 
 test_file $BARCODE_REF
 
@@ -169,13 +172,8 @@ fi
 # General outline for identifying CRISPR-induced mutations via high-throughput 
 # targeted resequencing
 
-# Prior to any of this, make an index of the amplified regions.
 
-
-
-# Convert input BAM to FASTQ or FASTA
-# FASTA	might be nice if there are further reads to reduce, but FASTQ is
-# going to be better for mapping, especially if I use Novoalign.
+# Convert input BAM to FASTQ
 
 echo "Converting to FASTQ..."
 
@@ -228,7 +226,8 @@ test_file ${BASE}.intraM13blacklist
 
 
 
-# Remove the fragments for which M13 showed up more than once in at least one read
+# Remove the fragments for which M13 showed up more than once in at least one
+# read
 
 echo "Removing fragments with bad inverted-M13 reads."
 echo "Operating on bcL..."
@@ -251,7 +250,8 @@ test_file ${BASE}.bcR.nointraM13invert
 
 
 
-# (Can now remove the original bcL and bcR, if desired; can also remove the blacklist)
+# The remainder of the script does not require the original bcL and bcR, nor the
+# blacklist.
 
 
 
@@ -305,8 +305,10 @@ echo "Identifying reads for which the barcodes do not agree, to be removed later
 
 test_file ${BASE}.bc.agree.gz
 
-# (Better zip up the original bcR and bcL files if you want to keep them -
-# otherwise, delete them)
+gzip ${BASE}.bcL.noM13invert
+gzip ${BASE}.bcR.noM13invert
+
+
 
 # Remove reads for which the barcode is not on the list of accepted barcodes
 
@@ -364,7 +366,8 @@ then
 	
 	
 	
-	# Identify all reads that begin with a primer that MIGHT be from a long fragment.
+	# Identify all reads that begin with a primer that MIGHT be from a long
+	# fragment.
 	
 	../sh/primer_longfrag_whittle.sh \
 		${SHORTPRIMER} \
@@ -423,31 +426,18 @@ echo "Splitting the FASTQ file..."
 test_file ${BASE}.fulltrim.passbc.1
 test_file ${BASE}.fulltrim.passbc.2
 
-# echo "Compressing the split FASTQ files..."
-# gzip -c ${BASE}.fulltrim.passbc.1 > ${BASE}.fulltrim.passbc.1.fastq.gz
-# gzip -c ${BASE}.fulltrim.passbc.2 > ${BASE}.fulltrim.passbc.2.fastq.gz
-# 
-# test_file ${BASE}.fulltrim.passbc.1.fastq.gz
-# test_file ${BASE}.fulltrim.passbc.2.fastq.gz
-
+echo "Renaming split FASTQ files..."
 mv ${BASE}.fulltrim.passbc.1 ${BASE}.fulltrim.passbc.1.fastq
 mv ${BASE}.fulltrim.passbc.2 ${BASE}.fulltrim.passbc.2.fastq
 
 test_file ${BASE}.fulltrim.passbc.1.fastq
 test_file ${BASE}.fulltrim.passbc.2.fastq
 
-rm ${BASE}.fulltrim.passbc.1
-rm ${BASE}.fulltrim.passbc.2
-
 
 
 # Align the trimmed sequences
-# Need to use a gap-aware aligner.  Try Novoalign the first time out, but BWA
-# or Bowtie2 are also options.
-
-####### IMPORTANT - the mean fragment size and SD need to fit the BAM being
-####### used. Might be something that needs to be submitted on the command
-####### line, maybe with defaults.
+# Need to use a gap-aware aligner. Novoalign is used here, but BWA or Bowtie2
+# are also options.
 
 echo "Aligning reads..."
 ../sh/novoalign.sh \
@@ -461,6 +451,8 @@ echo "Aligning reads..."
 
 test_file ${BASE}.aligned.bam
 
+gzip ${BASE}.fulltrim.passbc.1.fastq
+gzip ${BASE}.fulltrim.passbc.2.fastq
 
 
 # Store the header of the BAM as a separate SAM file
@@ -510,7 +502,8 @@ test_file ${BASE}.aligned.pp.bc.target.bam
 
 
 # Split the BAM output into as many BAM files as there are fish (that is, split
-# by barcode & position, since some barcodes are used for multiple fish). Split into SAMs, but convert them to BAMs.
+# by barcode & position, since some barcodes are used for multiple fish). Split
+# into SAMs, but convert them to BAMs.
 
 echo "Splitting BAM by target and barcode..."
 ../sh/region_barcode_bamsplit.sh \
@@ -548,8 +541,6 @@ do
 # 	test_file region_barcode.${i}.rmdup.bam
 
 	# Make variant calls, ending up with VCF
-	# For the first time through, this is probably best done with bam2mpg,
-	# followed by mpg2vcf.
 	
 	echo "Converting region_barcode.${i}.rmdup.bam from BAM to MPG..."
 	../sh/bam2mpg.sh \
@@ -571,11 +562,8 @@ do
 	
 	test_file region_barcode.${i}.snv.vcf.bgz
 	test_file region_barcode.${i}.div.vcf.bgz
-	
-	# Output an indication of the fish line, the individual ID, and if it's
-	# homozygous reference (0/0), het (1/0), or homozygous mutant (1/1).
-	
-	# Check if there are any DIVs at all (specifically deletions).
+		
+	# Check if there are any DIVs at all.
 	
 	if 
 		[ `gunzip -c region_barcode.${i}.div.vcf.bgz | wc -l` -gt 8 ]
@@ -584,8 +572,8 @@ do
 		echo "DIV detected in region_barcode.${i}.div.vcf.bgz."
 		
 		# If there IS a DIV, go back to region_barcode.${i}.bam. Select every
-		# sequence that contains a "D" in the CIGAR, then use sort and uniq -c
-		# to identify the most common sequence. 
+		# sequence that contains a "D" or "I" in the CIGAR, then use sort and
+		# uniq -c to identify the most common sequence. 
 		
 		echo "Identifying the deletion with the most reads..."
 		../sh/most_freq_div.sh \
@@ -594,9 +582,9 @@ do
 		
 		test_file region_barcode.${i}.freqdiv
 		
-		# Take a line containing this sequence and run it through
-		# translate_cigar.pl. Print the sequence, which now contains the
-		# deletion, as well as the target and barcode information.
+		# Take a line containing this sequence and run it through sam2pairwise.
+		# Print the sequence, which now contains the deletion, as well as the
+		# target and barcode information.
 		
 		echo "Visualizing the DIV..."
 		../sh/cigar_and_md_to_div.sh \
@@ -663,12 +651,6 @@ else
   mv Output_${NAME}_${JOB_ID}/ .. || throw_error "Didn't move Output_${NAME}_${JOB_ID}!"
 fi 
 
-
-
-# echo ""
-# echo "Removing working directory and files..."
-# cd ..
-# rm -r $workdir
 
 
 echo ""

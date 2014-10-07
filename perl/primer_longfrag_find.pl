@@ -3,17 +3,8 @@
 use strict;
 use warnings;
 
-#Give that file to perl, loop through. At each line, if you haven't seen the
-#pair, store it. If you have seen the pair, compare the two. The actual
-#comparison: It's a bit redundant and sloppy, but could have a hash in which all
-#primers are keys, and their pairs are values. So you check if, say, the primer
-#of the first read (acting as a key) has a value equal to the primer of the
-#second. MOST of the time, it won't, so ignore those. If it DOES match, then
-#print both lines, or at least the basename they share.
-#
-#Go back to the tab-delimited file and remove the lines that were printed by the
-#perl script. (is that really necessary? They'll be removed for not being proper 
-#pairs later, anyway)
+# Loop through the file. At each line, if you haven't seen the pair, store it.
+# If you have seen the pair, compare the two. 
 
 if ( @ARGV != 2 ) {
 	die "Usage: primer_longfrag_find.pl 2col primer_tabfq\n$!";
@@ -82,8 +73,8 @@ while (<TABFQ>){
 			
 		} else {
 			
-			# If the two primers don't correspond, just ignore them. The one entry can 
-			# be deleted from the hash to save memory.
+			# If the two primers don't correspond, just ignore them. The one
+			# entry can be deleted from the hash to save memory.
 			
 			delete $read_hash{$basename};
 			next;

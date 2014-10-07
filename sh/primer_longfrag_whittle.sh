@@ -7,7 +7,6 @@ OUTTAB=$4
 
 source ~/.bashrc
 
-# 
 
 awk -v n="${CUTOFF}" '{print substr($2,1,n)"\t"substr($3,1,n)}' ${LONGFRAGBC} \
 	> ${LONGFRAGBC}.2col

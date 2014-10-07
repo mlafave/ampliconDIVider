@@ -12,7 +12,8 @@ OUTDIV=$5
 #   column header.
 # --ref is the FASTA genome reference
 # --mpg is the MPG file to be processed
-# --notabix prevents the creation of index files
+# --notabix prevents the creation of index files, but only in more recent
+# versions of the script
 
 
 mpg2vcf.pl \
