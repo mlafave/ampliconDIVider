@@ -40,6 +40,8 @@ The first two columns show the placement of each sample in a plate. The third co
 
 -h	print a help message with this list of options and exit
 
+-l	calculate the read length from the first entry of the BAM file, and calculate the mean & standard deviation of fragment length from the third column of the barcode file specified via -b. This flag is optional; if it isn't used, the values used in Varshney et al. are assigned (defaults: read length = 300, mean fragment length = 309, fragment length standard deviation = 1259)
+
 -n	name: Add a name (without spaces) to be used in the working directory and output files. If this option is not provided, "target" is used as the default.
 
 -p	primers of long fragments: If this option is used, the program will use the corresponding file to identify fragments that have the indicated primers pairs at the start of both paired reads, but which don't neccessarily constitute "proper pairs". Useful for identifying fragments with deletions so large they are fail to be mapped by the aligner. It has the following format:

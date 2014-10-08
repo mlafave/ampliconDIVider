@@ -42,6 +42,7 @@ Usage: ./ampliconDIVider_driver.sh [options] input.bam
 	Options:
 	-b	barcode file (required)
 	-h	print this help message and exit
+	-l	calculate the read length and mean & standard deviation of fragment length from input files (defaults: 300, 309, 1259)
 	-n	name
 	-p	primers of long fragments
 	-r	reference FASTA file (required)
@@ -50,7 +51,9 @@ EOF
 }
 
 NAME="target"
-while getopts "b:hn:p:r:x:" OPTION
+MEANFRAG=
+FRAGSD=
+while getopts "b:hln:p:r:x:" OPTION
 do
 	case $OPTION in
     	b)
@@ -59,6 +62,9 @@ do
     	h)
     		print_usage
     		exit 0
+    		;;
+    	l)
+    		GETLENGTH="TRUE"
     		;;
     	n)
     		NAME=$OPTARG
@@ -435,6 +441,39 @@ test_file ${BASE}.fulltrim.passbc.2.fastq
 
 
 
+# Assign values for read length, mean fragment length, and fragment length
+# standard deviation. If -l was not specified, use the defaults.
+
+if [ ${GETLENGTH} ]
+then
+	
+	# Calculate read length
+
+	LENGTH=`samtools view ${BAMPATH} \
+		| head -1 \
+		| awk '{print length($10)}'`
+
+	# Calculate fragment length mean and SD (assumes equal representation of
+	# all wells, which, while probably not the case, is close enough for the
+	# aligner)
+
+	read MEANFRAG FRAGSD <<< `cat ${BARCODE_REF} \
+		| cut -f3 \
+		| awk -F_ '{print $NF}' \
+		| awk -F- '{ print $2-$1+1 }' \
+		| ../sh/mean_and_sd.sh`
+
+else
+	
+	# Defaults from Varshney et al.
+	LENGTH=300
+	MEANFRAG=309
+	FRAGSD=1259
+	
+fi
+
+
+
 # Align the trimmed sequences
 # Need to use a gap-aware aligner. Novoalign is used here, but BWA or Bowtie2
 # are also options.
@@ -444,9 +483,9 @@ echo "Aligning reads..."
 	${BASE}.fulltrim.passbc.1.fastq \
 	${BASE}.fulltrim.passbc.2.fastq \
 	${INDEX} \
-	300 \
-	309 \
-	1259 \
+	${LENGTH} \
+	${MEANFRAG} \
+	${FRAGSD} \
 	${BASE}.aligned.bam
 
 test_file ${BASE}.aligned.bam
