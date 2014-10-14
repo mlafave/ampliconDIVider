@@ -1,7 +1,7 @@
 ampliconDIVider
 ============
 
-The ampliconDIVider contains the scripts used to identify deletion and insertion variants (DIVs) in DNA amplicons, as presented in [whatever the paper is] (Submitted). It tests each sample for DIVs, and if at least one is detected, the most frequent DIV-containing sequence is presented as a pairwise alignment. 
+ampliconDIVider contains the scripts used to identify deletion and insertion variants (DIVs) in DNA amplicons, as presented in "High-Throughput Gene Targeting and Phenotyping in Zebrafish Using CRISPR/Cas9" by Varshney et al. (Submitted). It tests each sample for DIVs, and if at least one is detected, the most frequent DIV-containing sequence is presented as a pairwise alignment. 
 
 
 Requirements
@@ -113,7 +113,7 @@ Citation
 
 If you use ampliconDIVider in your work, please use the following reference to cite it:
 
-[whatever we call the paper]
+Varshney GK, Pei W, LaFave MC, Idol J, Xu L, Gallardo V, Carrington B, Bishop K, Jones M, Li M, Harper U, Chen W, Sood R, Ledin J, and Burgess SM. High-Throughput Gene Targeting and Phenotyping in Zebrafish Using CRISPR/Cas9. (Submitted)
 
 
 Contact
