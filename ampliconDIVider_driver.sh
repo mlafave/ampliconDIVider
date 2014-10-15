@@ -41,23 +41,26 @@ print_usage()
 Usage: ./ampliconDIVider_driver.sh [options] input.bam
 	Options:
 	-b	barcode file (required)
+	-f	reference FASTA file (required)
 	-h	print this help message and exit
 	-l	calculate the read length and mean & standard deviation of fragment length from input files (defaults: 300, 309, 1259)
 	-n	name
 	-p	primers of long fragments
-	-r	reference FASTA file (required)
+	-r	ranges file
 	-x	path to alignment index (required)
 EOF
 }
 
 NAME="target"
-MEANFRAG=
-FRAGSD=
-while getopts "b:hln:p:r:x:" OPTION
+
+while getopts "b:f:hln:p:r:x:" OPTION
 do
 	case $OPTION in
     	b)
     		BARCODE_PATH=$OPTARG
+    		;;
+    	f)
+    		REFERENCE=$OPTARG
     		;;
     	h)
     		print_usage
@@ -73,7 +76,7 @@ do
     		LONGFRAGPRIMERS_PATH=$OPTARG
     		;;
     	r)
-    		REFERENCE=$OPTARG
+    		RANGES_PATH=$OPTARG
     		;;
     	x)
     		INDEX=$OPTARG
@@ -109,6 +112,15 @@ then
 	LONGFRAGPRIMERS_DIR=`dirname ${LONGFRAGPRIMERS_PATH}`
 	LONGFRAGPRIMERS=`basename ${LONGFRAGPRIMERS_PATH}`
 	LONGFRAGPRIMERS_PATH="`cd \"$LONGFRAGPRIMERS_DIR\" 2>/dev/null && pwd -P || echo \"$LONGFRAGPRIMERS_DIR\"`/$LONGFRAGPRIMERS"
+fi
+
+
+# If -r was used, identify the absolute path to the ranges file, so it can be copied later
+if [ ${RANGES_PATH} ]
+then
+	RANGES_DIR=`dirname ${RANGES_PATH}`
+	RANGES=`basename ${RANGES_PATH}`
+	RANGES_PATH="`cd \"$RANGES_DIR\" 2>/dev/null && pwd -P || echo \"$RANGES_DIR\"`/$RANGES"
 fi
 
 
@@ -152,6 +164,10 @@ function verify_index
  fi
 }
 
+
+verify_index ${INDEX}
+
+
 # The barcode file should be reasonably small, so make a local copy in the
 # working directory. That way, there's no need to worry if the main file is
 # altered or moved in the meantime.
@@ -169,6 +185,14 @@ if [ ${LONGFRAGPRIMERS} ]
 then
 	cp ${LONGFRAGPRIMERS_PATH} .
 	test_file ${LONGFRAGPRIMERS}
+fi
+
+# Same for the ranges
+
+if [ ${RANGES} ]
+then
+	cp ${RANGES_PATH} .
+	test_file ${RANGES}
 fi
 
 
@@ -632,6 +656,68 @@ do
 		
 		test_file ${BASE}.id_div
 		
+		
+		
+		# If the RANGES flag was specified, identify any variants within that
+		# range.
+		
+		if [ $RANGES ]
+		then
+			
+			# Use region_barcode.${i}.freqdiv as input, as well as the BAM
+			# number. Look in the $RANGES file to see what region of the read
+			# should be checked for DIVs.
+			
+			echo "Identifying DIVs in the specified range..."		
+			../sh/div_in_range.sh \
+				region_barcode.${i}.freqdiv \
+				${i} \
+				${RANGES} \
+				region_barcode.${i}.rangediv
+			
+			test_file region_barcode.${i}.rangediv
+			
+			# If the .rangediv file found a deletion, continue to process it.
+			if [ -s region_barcode.${i}.rangediv ]
+			then
+				
+				echo "DIVs detected in range."
+				
+				# Pull the barcode from the freqdiv file via awk, and add it to
+				# the target name in the DIV file.
+				
+				echo "Adding barcode information..."
+				../sh/div_barcode.sh \
+					region_barcode.${i}.freqdiv \
+					region_barcode.${i}.rangediv \
+					region_barcode.${i}.rangedivbc
+			
+				test_file region_barcode.${i}.rangedivbc
+				rm region_barcode.${i}.rangediv
+			
+			
+			
+				# div_table.sh combines the barcode file with the BAM number
+				# and DIV information, using >> to append the new line to
+				# anything that was there already.
+				
+				echo "Appending to DIV table..."
+				../sh/div_table.sh \
+					${BARCODE_REF} \
+					region_barcode.${i}.rangedivbc \
+					${BASE}.range.div.table
+				
+				test_file ${BASE}.range.div.table
+				rm region_barcode.${i}.rangedivbc
+			else
+				# If there's nothing in the file, just delete it.
+				rm region_barcode.${i}.rangediv
+			fi
+			
+		fi
+		
+		
+		
 	else 
 		
 		echo "No DIV detected in region_barcode.${i}.div.vcf.bgz."
@@ -661,6 +747,17 @@ test_file ${BASE}.divs.gz
 
 
 
+# If -r was used, compress the DIV table file.
+if [ $RANGES ]
+then 
+	sort -k1,1 -k2,2 ${BASE}.range.div.table \
+		| gzip -c \
+		> ${BASE}.range.div.table.gz
+	test_file ${BASE}.range.div.table.gz
+fi
+
+
+
 echo "Making output directory..."
 mkdir $PWD/Output_${NAME}_${JOB_ID}
 
@@ -678,6 +775,7 @@ function move_file
 echo "Moving output file to Output directory..."
 move_file ${BASE}.divs.gz
 if [ ${LONGFRAGPRIMERS} ]; then move_file ${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.top10.gz; fi
+if [ ${RANGES} ]; then move_file ${BASE}.range.div.table.gz; fi
 
 
 
