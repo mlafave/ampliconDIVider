@@ -30,7 +30,7 @@ Usage
 	ampliconDIVider_driver.sh [options] input.bam
 
 Options:
--b	barcode file (required): This file indicates the relationship between, plate, well, amplicon, founder, progeny ID, and 6 bp barcode. It has the following format:
+`-b`:  barcode file (required): This file indicates the relationship between, plate, well, amplicon, founder, progeny ID, and 6 bp barcode. It has the following format:
 	
 	Plate1	A1	CochT1_chr17_28807187-28807424	1F	1	AAAAAA
 	Plate10	A1	DFNA5T2_chr16_23514121-23514392	1F	1	AAAAAA
@@ -38,13 +38,15 @@ Options:
 
 The first two columns show the placement of each sample in a plate. The third column indicates both the name of the target amplicon and the position of the amplicon using 1-based values, but without using the colon character. The fourth column contains the ID of the founder in which the CRISPR cut, and the firth column is used to distinguish between the progeny of that founder. The sixth column are the six bases of the barcode, written from 5' to 3'.
 
--h	print a help message with this list of options and exit
+`-f`:  Reference FASTA file (required): A FASTA file containing the sequence of the amplicons of interest. This should be the same file used to create the index for the aligner. If some of the target amplicons are nested within others, it's better to not include the larger of the two. For example, if you have amplicons from position 100 to 200, 600 to 700, and 100 to 700, then the one from 100 to 700 should not be included in this file or the aligner index, or it may cause alignment difficulites for the shorter amplicons. The hypothetical 100 to 700 sample can instead be monitored by using the `-p` option.
 
--l	calculate the read length from the first entry of the BAM file, and calculate the mean & standard deviation of fragment length from the third column of the barcode file specified via -b. This flag is optional; if it isn't used, the values used in Varshney et al. are assigned (defaults: read length = 300, mean fragment length = 309, fragment length standard deviation = 1259)
+`-h`:  Print a help message with this list of options and exit
 
--n	name: Add a name (without spaces) to be used in the working directory and output files. If this option is not provided, "target" is used as the default.
+`-l`:  Calculate the read length from the first entry of the BAM file, and calculate the mean & standard deviation of fragment length from the third column of the barcode file specified via -b. This flag is optional; if it isn't used, the values used in Varshney et al. are assigned (defaults: read length = 300, mean fragment length = 309, fragment length standard deviation = 1259)
 
--p	primers of long fragments: If this option is used, the program will use the corresponding file to identify fragments that have the indicated primers pairs at the start of both paired reads, but which don't neccessarily constitute "proper pairs". Useful for identifying fragments with deletions so large they are fail to be mapped by the aligner. It has the following format:
+`-n`:  Name: Add a name (without spaces) to be used in the working directory and output files. If this option is not provided, "target" is used as the default.
+
+`-p`:  Primers of long fragments: If this option is used, the program will use the corresponding file to identify fragments that have the indicated primers pairs at the start of both paired reads, but which don't neccessarily constitute "proper pairs". Useful for identifying fragments with deletions so large they are fail to be mapped by the aligner. It has the following format:
 	
 	cecr1a_T1F/T2R_25:17051437-17051898	GTTTCAGTGGATTGGCTGGT	GCAGTGCTCTGATCTCCACA
 	man2a1_T2F/T1R_5:58517329-58543258	AGCTCCTACTGTGTTTGACTGC	TGCATGCAGTTTCATGTTGA
@@ -52,9 +54,15 @@ The first two columns show the placement of each sample in a plate. The third co
 	
 The first column is the amplicon ID. This can be written the same way as the third column in `-b`, but it doesn't need to be (for example, colons are allowed). The second and third columns are the sequences of the primers used for the "long" version of the amplicon, written 5' to 3'.
 
--r	reference FASTA file (required): A FASTA file containing the sequence of the amplicons of interest. This should be the same file used to create the index for the aligner. If some of the target amplicons are nested within others, it's better to not include the larger of the two. For example, if you have amplicons from position 100 to 200, 600 to 700, and 100 to 700, then the one from 100 to 700 should not be included in this file or the aligner index, or it may cause alignment difficulites for the shorter amplicons. The hypothetical 100 to 700 sample can instead be monitored by using the `-p` option.
+`-r`:  Ranges file: a file indicating the subset of the read in which DIVs are of most interest. While all samples that have a DIV at any point will be reported in the normal `${BASE}.divs.gz` output file, specifying this option will result in an additional output file called `${BASE}.range.div.table.gz`. The format of the file specified by -r is a tab-delimited file containing the target ID identical to the third column of the barcode file, followed by the 1-based start and end of the portion of interest in the fragment:
+	
+	cecr1a_T1_25_17051437-17051625	121	180
+	cecr1a_T2_25_17051701-17051898	67	126
+	cecr1b_T2_4_5106979-5107305	117	176
 
--x	path to alignment index (required): Either an absolute or relative path to the aligner index file. The index itself can be created by using novoindex and the FASTA file used for option `-f`:
+`-v`:  Print the version number and quit.
+
+`-x`:  Path to alignment index (required): Either an absolute or relative path to the aligner index file. The index itself can be created by using novoindex and the FASTA file used for option `-f`:
 
 	novoindex set1_amplicons.nix ~/path/to/ampliconDIVider/Varshney_et_al_input/set1_amplicons.fa
 
@@ -79,6 +87,8 @@ A sample without a DIV would look like this:
 
 If the `-p` option was used, the output directory will also contain a file called `${BASE}.fulltrim.passbc.detectedlongfrag.${SHORTPRIMER}.top10.gz`. The file has three columns: the number of times that entry appeared for a given amplicon, the ID of the amplicon from the first column of the `-p` file, and a sequence that matches the sequences from the second and third column of the `-p` file. Although the reads will be written 5’ to 3’, they are not necessarily all from the “forward” strand. Only the 10 most frequent sequences for each target are displayed.
 
+If the `-r` option was used, the output directory will contain a file called `${BASE}.range.div.table.gz`. This file combines the information in the barcode file with data about DIVs that fell in the range of interest. It has nine columns: plate, well, amplicon, founder, progeny ID, 6 bp barcode, group number (the integer internally assigned to represent the combination of barcode and target), a one-character description of the type of DIV detected (D = deletion; I = insertion ;C = complex, or a combination of a deletion and an insertion that each fall anywhere within the specified range), and the description of all DIVs that overlap the specified range. Each DIV is represented by the one-character tag, the one-based position at which the DIV begins, and the length of the DIV. If there were multiple DIVs in the range, they are delimited by `::`.
+
 In addition, most of the intermediate files are kept in the `Workdir_${NAME}_${JOB_ID}` directory. These can be useful for viewing the reads within a given sample, or checking the evidence for a variant call. Each unique combination of target region and barcode is assigned an integer (stored internally as `${i}`), which appears in the name of each file:
 
 * `region_barcode.${i}.bam`: All reads that aligned to the specified target with the specified barcode. All reads in these files should be properly paired.
@@ -95,7 +105,7 @@ Testing ampliconDIVider
 
 To test the program, first create a novoalign index to `Varshney_et_al_input/set1_amplicons.fa`, as described above. Then, run the following command from within the ampliconDIVider/ directory:
 
-	./ampliconDIVider_driver.sh -b Varshney_et_al_input/set1_barcodes -n example -p Varshney_et_al_input/set1_long_fragments -r Varshney_et_al_input/set1_amplicons.fa -x ~/path/to/set1_amplicons.nix example.bam
+	./ampliconDIVider_driver.sh -l -b Varshney_et_al_input/set1_barcodes -n example -p Varshney_et_al_input/set1_long_fragments -r Varshney_et_al_input/set1_ranges -f Varshney_et_al_input/set1_amplicons.fa -x ~/path/to/set1_amplicons.nix example.bam
 	
 The output should be the same as the files in the Example_output/ directory.
 

@@ -47,13 +47,21 @@ Usage: ./ampliconDIVider_driver.sh [options] input.bam
 	-n	name
 	-p	primers of long fragments
 	-r	ranges file
+	-v	print version and quit
 	-x	path to alignment index (required)
+EOF
+}
+
+print_version()
+{
+	cat <<EOF
+1.1.0
 EOF
 }
 
 NAME="target"
 
-while getopts "b:f:hln:p:r:x:" OPTION
+while getopts "b:f:hln:p:r:vx:" OPTION
 do
 	case $OPTION in
     	b)
@@ -77,6 +85,10 @@ do
     		;;
     	r)
     		RANGES_PATH=$OPTARG
+    		;;
+    	v)
+    		print_version
+    		exit 0
     		;;
     	x)
     		INDEX=$OPTARG
