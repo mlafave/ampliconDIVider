@@ -18,6 +18,6 @@ SEQ=`samtools view ${INBAM} \
 # Extract the first instance of said sequence from the BAM
 
 samtools view ${INBAM} \
-	| grep -m1 ${SEQ} > ${OUTPUT}
+	| grep -w -m1 ${SEQ} > ${OUTPUT}
 
 exit
