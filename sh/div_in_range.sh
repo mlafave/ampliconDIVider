@@ -25,7 +25,7 @@ LEFT=`grep $TARGET $RANGES | cut -f2 `
 RIGHT=`grep $TARGET $RANGES | cut -f3`
 			
 cat ${FREQDIV} \
-	| /home/lafavemc/Crispr/Targeted_reseq/ampliconDIVider/perl/sam_all_div.pl \
+	| ../perl/sam_all_div.pl \
 	| awk -F_ '{print $0"\t"$2"\t"$2+($3-1)}' \
 	| awk -v LEFT="$LEFT" -v RIGHT="$RIGHT" '($3 >= LEFT && $3 <= RIGHT) || ($2 >= LEFT && $2 <= RIGHT)' \
 	| cut -f1 \
