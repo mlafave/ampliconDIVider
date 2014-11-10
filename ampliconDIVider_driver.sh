@@ -55,7 +55,7 @@ EOF
 print_version()
 {
 	cat <<EOF
-1.1.0
+1.1.1
 EOF
 }
 
