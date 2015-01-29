@@ -110,14 +110,6 @@ To test the program, first create a novoalign index to `Varshney_et_al_input/set
 The output should be the same as the files in the Example_output/ directory.
 
 
-License
--------
-
-ampliconDIVider is licensed under the MIT license. In addition, as a work created at the National Institutes of Health, it carries the following notice:
- 
-This software/database is either a United States Government Work or was made under contract for the United States Government. In either case the public may use the software/database on a worldwide and royalty-free basis for any purpose and may reproduce and prepare derivative works without limitation. Although all reasonable efforts have been taken to ensure the accuracy and reliability of the software/database and associated data, the National Human Genome Research Institute (NHGRI), National Institutes of Health (NIH) and the U.S. Government do not and cannot warrant the performance or results that may be obtained by using this software/database or data. NHGRI, NIH and the U.S. Government disclaim all warranties as to performance, merchantability or fitness for any particular purpose.
-
-
 Citation
 --------
 
