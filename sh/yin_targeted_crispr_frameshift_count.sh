@@ -32,11 +32,12 @@ source ~/.bashrc
 print_usage()
 {
   cat <<EOF
-Usage: yin_targeted_crispr_frameshift.sh [options] -b <_bamnumbers> -n <_names> -r <_ranges>
+Usage: yin_targeted_crispr_frameshift.sh [options] (-b <_bamnumbers> | -c <barcodes>) -n <_names> -r <_ranges>
 Note that this script must be run within the 'Workdir' directory produced by 
-ampliconDIVider_driver.sh.
+ampliconDIVider_driver.sh. 
 	Options:
-	-b	the _bamnumbers file (required)
+	-b	the _bamnumbers file (required if not defining the barcode file)
+	-c	the barcode file (required if not defining the _bamnumbers file)
 	-h	print this help message and exit
 	-n	the _names file (required)
 	-r	the _ranges file (required)
@@ -51,11 +52,14 @@ EOF
 # SAMPLEBAMNUMBERS is the "_bamnumbers" file, and contains lines like:
 # insra_chr2_37298662-37298953_Founder04	Plate1	D1	insra_chr2_37298662-37298953	Founder04	0	TTCTAG	34
 
-while getopts "b:hn:r:" OPTION
+while getopts "b:c:hn:r:" OPTION
 do
 	case $OPTION in
     	b)
     		SAMPLEBAMNUMBERS=`full_path $OPTARG`
+    		;;
+    	c)
+    		BARCODE_PATH=`full_path $OPTARG`
     		;;
     	h)
     		print_usage
@@ -71,6 +75,58 @@ do
 done
 shift $((OPTIND-1))
 
+ID=`date +"%s"`
+
+
+# If the bamnumbers file was not provided, generate it from the barcode file
+# and the list of BAM files.
+
+if [ ! ${SAMPLEBAMNUMBERS} ]
+then
+	
+	echo "No bamnumbers file detected; generating automatically..."
+	
+	test_file $BARCODE_PATH
+	
+	# As this script must be run in the ampliconDIVider working directory, the
+	# relevant BAM files are in the same location at this part of the script.
+	
+	TOTALBAMS=`ls region_barcode.*.bam | wc -l`
+	
+	# Create the file that associates the sample with the BAM number
+	
+	i=0
+	
+	while [[ $i -lt ${TOTALBAMS} ]]
+	do
+		i=$(( $i + 1 ))
+		samtools view region_barcode.${i}.bam \
+			| head -1 \
+			| cut -f3,20 \
+			| awk -v OFS="\t" -v i="$i" '{print i,$1"_"substr($2,6,6)}'
+	done \
+	| sort -k2,2 \
+	> bamnumber_ids_${ID}
+	
+	# Use the barcode file to generate the bamnumbers file
+	
+	BARCODE_FILE=`basename ${BARCODE_PATH}`
+	
+	awk -v OFS="\t" '{ print $3"_"$6,$3"_"$4,$0 }' ${BARCODE_PATH} \
+		| sort -k1,1 \
+		| join -1 1 -2 2 - bamnumber_ids_${ID} \
+		| tr ' ' "\t" \
+		| cut -f2- \
+		| sort -k1,1 \
+		> ${BARCODE_FILE}_bamnumbers
+	
+	SAMPLEBAMNUMBERS=`full_path ${BARCODE_FILE}_bamnumbers`
+	
+	rm bamnumber_ids_${ID}
+fi
+
+
+
 
 test_file $SAMPLEBAMNUMBERS
 test_file $FOUNDERTARGET
@@ -83,8 +139,6 @@ TARGET=`head -1 $FOUNDERTARGET | cut -d_ -f1`
 
 
 # Make the working directory
-
-ID=`date +"%s"`
 
 mkdir Frameshifts_${TARGET}_${ID}
 cd Frameshifts_${TARGET}_${ID}
