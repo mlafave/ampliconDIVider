@@ -33,7 +33,14 @@ while (<>){
 
 		$cigar_number = shift @cigar;
 		$cigar_letter = shift @cigar;
-		
+
+		###############################
+		# begin add by zelin 2015-10-25
+		next if ($cigar_letter eq "H");
+		next if ($cigar_letter eq "P");
+		# end
+		##############################
+
 		if ($cigar_letter eq "S"){
 			$subpos += $cigar_number;
 			next;
