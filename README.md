@@ -4,7 +4,7 @@ ampliconDIVider
 ampliconDIVider contains the scripts used to identify deletion and insertion
 variants (DIVs) in DNA amplicons, as presented in "High-Throughput Gene
 Targeting and Phenotyping in Zebrafish Using CRISPR/Cas9" by Varshney et al.
-(Submitted). It tests each sample for DIVs, and if at least one is detected,
+(http://dx.doi.org/10.1101/gr.186379.114). It tests each sample for DIVs, and if at least one is detected,
 the most frequent DIV-containing sequence is presented as a pairwise alignment. 
 
 
@@ -18,12 +18,12 @@ The following programs must be in a directory in your $PATH, with the version
 at least as recent as those listed here:
 
 * Perl v.5.8.8
-* cutadapt v.1.3
-* novoalign v.3.02.07
-* bam2mpg and mpg2vcf.pl (available from http://research.nhgri.nih.gov/software/bam2mpg/. It may be necessary to set $PERL5LIB to the lib/ directory within the bam2mpg/ directory.) 
+* cutadapt v.1.3 (https://github.com/marcelm/cutadapt/)
+* novoalign v.3.02.07 (http://www.novocraft.com/support/download/)
+* bam2mpg and mpg2vcf.pl (available from http://research.nhgri.nih.gov/software/bam2mpg/, or directly from https://github.com/nhansen/bam2mpg. It may be necessary to set $PERL5LIB to the lib/ directory within the bam2mpg/ directory, and export.) 
 * sam2pairwise v.1.0.0 (available from http://www.github.com/mlafave/sam2pairwise)
-* samtools v.0.1.19-44428cd
-* bamtools v.2.3.0
+* samtools v.0.1.19-44428cd (http://www.htslib.org/ for more recent versions)
+* bamtools v.2.3.0 (https://github.com/pezmaster31/bamtools)
 * bgzip
 
 ampliconDIVider_driver.sh uses relative paths to call sub-scripts, so the
@@ -47,9 +47,9 @@ Options:
 plate, well, amplicon, founder, progeny ID, and 6 bp barcode. It has the
 following format:
 	
-	Plate1	A1	CochT1_chr17_28807187-28807424	1F	1	AAAAAA
-	Plate10	A1	DFNA5T2_chr16_23514121-23514392	1F	1	AAAAAA
-	Plate11	A1	myo3AT1_chr24_6309161-6309391	1F	1	AAAAAA
+	plate01	A01	cecr1a_T1_25_17051437-17051625	1M	1	AAAAAA
+	plate02	A01	cecr1a_T2_25_17051701-17051898	1M	1	AAAAAA
+	plate03	A01	cecr1b_T2_4_5106979-5107305	1M	1	AAAAAA
 
 The first two columns show the placement of each sample in a plate. The third
 column indicates both the name of the target amplicon and the position of the
@@ -84,7 +84,7 @@ default.
 the corresponding file to identify fragments that have the indicated primers
 pairs at the start of both paired reads, but which don't neccessarily
 constitute "proper pairs". Useful for identifying fragments with deletions so
-large they are fail to be mapped by the aligner. It has the following format:
+large they fail to be mapped by the aligner. It has the following format:
 	
 	cecr1a_T1F/T2R_25:17051437-17051898	GTTTCAGTGGATTGGCTGGT	GCAGTGCTCTGATCTCCACA
 	man2a1_T2F/T1R_5:58517329-58543258	AGCTCCTACTGTGTTTGACTGC	TGCATGCAGTTTCATGTTGA
@@ -327,15 +327,13 @@ Citation
 
 If you use ampliconDIVider in your work, please use the following reference to cite it:
 
-Varshney GK, Pei W, LaFave MC, Idol J, Xu L, Gallardo V, Carrington B, Bishop K, Jones M, Li M, Harper U, Chen W, Sood R, Ledin J, and Burgess SM. High-Throughput Gene Targeting and Phenotyping in Zebrafish Using CRISPR/Cas9. Genome Res. (In press)
+Varshney GK, Pei W, LaFave MC, Idol J, Xu L, Gallardo V, Carrington B, Bishop K, Jones M, Li M, Harper U, Chen W, Sood R, Ledin J, and Burgess SM. High-Throughput Gene Targeting and Phenotyping in Zebrafish Using CRISPR/Cas9. Genome Res. 2015 Jul;25(7):1030-42
 
 
 Contact
 -------
 
-Matthew C. LaFave, Ph.D.,
-Developmental Genomics Section, Translational and Functional Genomics Branch,
-NHGRI, NIH
+Matthew C. LaFave, Ph.D.
 
-Email: matthew.lafave [at sign] nih.gov
+Email: matt.lafave [at sign] gmail.com
 
